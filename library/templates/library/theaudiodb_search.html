@@ -12,7 +12,7 @@
 </div>
 
 <!-- Search Form -->
-<div class="card-static" style="max-width:640px; margin-bottom:2rem;">
+<div class="card-static" style="margin-bottom:2rem;">
     <form id="adb-search-form" method="get">
         <label for="id_nome" style="display:block; font-size:0.85rem; font-weight:600; color:var(--text-secondary); margin-bottom:0.4rem; text-transform:uppercase; letter-spacing:0.05em;">Nome Artista</label>
         <div style="display:flex; gap:0.75rem; align-items:stretch;">
@@ -62,7 +62,7 @@
             <tbody>
                 {% for r in results %}
                 <tr>
-                    <td>
+                    <td data-label="Foto">
                         {% if r.immagine %}
                         <img src="{{ r.immagine }}/preview" alt="{{ r.nome }}" style="width:50px; height:50px; object-fit:cover; border-radius:50%;">
                         {% else %}
@@ -71,10 +71,10 @@
                         </div>
                         {% endif %}
                     </td>
-                    <td style="font-weight:600;">{{ r.nome }}</td>
-                    <td><span class="badge badge-accent">{{ r.genere|default:"N/D" }}</span></td>
-                    <td>{{ r.nazione|default:"N/D" }}</td>
-                    <td style="text-align:right; white-space:nowrap;">
+                    <td data-label="Nome" style="font-weight:600;">{{ r.nome }}</td>
+                    <td data-label="Genere"><span class="badge badge-accent">{{ r.genere|default:"N/D" }}</span></td>
+                    <td data-label="Paese">{{ r.nazione|default:"N/D" }}</td>
+                    <td data-label="Azione" style="text-align:right; white-space:nowrap;">
                         <button type="button" class="btn btn-secondary btn-sm" onclick="toggleBio('{{ r.id }}')" id="btn-{{ r.id }}">
                             <span class="material-symbols-outlined">info</span> Bio
                         </button>
@@ -188,11 +188,11 @@ document.addEventListener('DOMContentLoaded', function() {
 
             html += `
                 <tr>
-                    <td>${imgSrc}</td>
-                    <td style="font-weight:600;">${r.nome}</td>
-                    <td>${badgeGen}</td>
-                    <td>${country}</td>
-                    <td style="text-align:right; white-space:nowrap;">
+                    <td data-label="Foto">${imgSrc}</td>
+                    <td data-label="Nome" style="font-weight:600;">${r.nome}</td>
+                    <td data-label="Genere">${badgeGen}</td>
+                    <td data-label="Paese">${country}</td>
+                    <td data-label="Azione" style="text-align:right; white-space:nowrap;">
                         <button type="button" class="btn btn-secondary btn-sm" onclick="toggleBio('${r.id}')" id="btn-${r.id}">
                             <span class="material-symbols-outlined">info</span> Bio
                         </button>
@@ -221,7 +221,7 @@ document.addEventListener('DOMContentLoaded', function() {
 function toggleBio(id) {
     const row = document.getElementById(`bio-${id}`);
     if (row.style.display === 'none') {
-        row.style.display = 'table-row';
+        row.style.display = window.innerWidth <= 768 ? 'block' : 'table-row';
     } else {
         row.style.display = 'none';
     }

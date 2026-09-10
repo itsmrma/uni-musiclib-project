@@ -12,7 +12,7 @@
 </div>
 
 <!-- Search Form -->
-<div class="card-static" style="max-width:640px; margin-bottom:2rem;">
+<div class="card-static" style="margin-bottom:2rem;">
     <form id="mb-search-form" method="get">
         <label for="id_titolo" style="display:block; font-size:0.85rem; font-weight:600; color:var(--text-secondary); margin-bottom:0.4rem; text-transform:uppercase; letter-spacing:0.05em;">Titolo Album</label>
         <div style="display:flex; gap:0.75rem; align-items:stretch;">
@@ -62,11 +62,11 @@
             <tbody>
                 {% for r in results %}
                 <tr>
-                    <td style="font-weight:600;">{{ r.titolo }}</td>
-                    <td>{{ r.artista }}</td>
-                    <td><span class="badge badge-accent">{{ r.anno }}</span></td>
-                    <td>{{ r.country }}</td>
-                    <td style="text-align:right; white-space:nowrap;">
+                    <td data-label="Titolo" style="font-weight:600;">{{ r.titolo }}</td>
+                    <td data-label="Artista">{{ r.artista }}</td>
+                    <td data-label="Anno"><span class="badge badge-accent">{{ r.anno }}</span></td>
+                    <td data-label="Paese">{{ r.country }}</td>
+                    <td data-label="Azione" style="text-align:right; white-space:nowrap;">
                         <button type="button" class="btn btn-secondary btn-sm" onclick="toggleTracks('{{ r.mbid }}')" id="btn-{{ r.mbid }}">
                             <span class="material-symbols-outlined">queue_music</span> Tracce
                         </button>
@@ -174,11 +174,11 @@ document.addEventListener('DOMContentLoaded', function() {
         results.forEach(r => {
             html += `
                 <tr>
-                    <td style="font-weight:600;">${r.titolo}</td>
-                    <td>${r.artista}</td>
-                    <td><span class="badge badge-accent">${r.anno}</span></td>
-                    <td>${r.country}</td>
-                    <td style="text-align:right; white-space:nowrap;">
+                    <td data-label="Titolo" style="font-weight:600;">${r.titolo}</td>
+                    <td data-label="Artista">${r.artista}</td>
+                    <td data-label="Anno"><span class="badge badge-accent">${r.anno}</span></td>
+                    <td data-label="Paese">${r.country}</td>
+                    <td data-label="Azione" style="text-align:right; white-space:nowrap;">
                         <button type="button" class="btn btn-secondary btn-sm" onclick="toggleTracks('${r.mbid}')" id="btn-${r.mbid}">
                             <span class="material-symbols-outlined">queue_music</span> Tracce
                         </button>
@@ -211,7 +211,7 @@ async function toggleTracks(mbid) {
     const content = document.getElementById(`content-${mbid}`);
     
     if (row.style.display === 'none') {
-        row.style.display = 'table-row';
+        row.style.display = window.innerWidth <= 768 ? 'block' : 'table-row';
         
         if (!content.dataset.loaded) {
             try {

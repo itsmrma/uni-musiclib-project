@@ -21,7 +21,7 @@
         <tbody>
             {% for utente in utenti %}
             <tr style="border-bottom: 1px solid var(--border-color);">
-                <td style="padding: 1rem; font-weight: 500;">
+                <td data-label="Utente" style="padding: 1rem; font-weight: 500;">
                     <div style="display: flex; align-items: center; gap: 1rem;">
                         {% if utente.profile.get_avatar_url %}
                             <img src="{{ utente.profile.get_avatar_url }}" style="width: 32px; height: 32px; border-radius: 50%; object-fit: cover;">
@@ -33,15 +33,15 @@
                         {{ utente.username }}
                     </div>
                 </td>
-                <td style="padding: 1rem; color: var(--text-secondary);">{{ utente.email|default:"—" }}</td>
-                <td style="padding: 1rem; text-align: center;">
+                <td data-label="Email" style="padding: 1rem; color: var(--text-secondary);">{{ utente.email|default:"—" }}</td>
+                <td data-label="Ruolo" style="padding: 1rem; text-align: center;">
                     {% if utente.is_superuser %}
                         <span style="background: var(--accent-color); color: white; padding: 0.2rem 0.5rem; border-radius: 4px; font-size: 0.8rem; font-weight: 600;">Admin</span>
                     {% else %}
                         <span style="background: var(--bg-primary); color: var(--text-secondary); padding: 0.2rem 0.5rem; border-radius: 4px; font-size: 0.8rem;">Utente</span>
                     {% endif %}
                 </td>
-                <td style="padding: 1rem; text-align: right;">
+                <td data-label="Azioni" style="padding: 1rem; text-align: right;">
                     <div style="display: flex; gap: 0.5rem; justify-content: flex-end;">
                         <a href="{% url 'library:admin_user_password' utente.pk %}" class="btn btn-secondary" style="padding: 0.5rem;" title="Cambia Password">
                             <span class="material-symbols-outlined icon-sm">password</span>

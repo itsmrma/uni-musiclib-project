@@ -17,9 +17,25 @@
 <form method="post" class="card-static">
     {% csrf_token %}
     
-    <!-- Campi base della canzone (nascosti se vogliamo che l'utente modifichi solo i metadati, oppure li mostriamo) -->
-    <div style="display:none;">
-        {{ form.as_p }}
+    <!-- Campi base della canzone -->
+    <div style="background:var(--bg-secondary); padding:1rem; border-radius:var(--radius-sm); border:1px solid var(--border-color); margin-bottom:2rem;">
+        <h2 style="font-size:1.1rem; margin-bottom:1rem; border-bottom:1px solid var(--border-color); padding-bottom:0.5rem;">Informazioni Principali</h2>
+        {% for field in form %}
+            <div class="form-group">
+                <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                {{ field }}
+                {% if field.help_text %}
+                <p class="form-help">{{ field.help_text }}</p>
+                {% endif %}
+                {% if field.errors %}
+                <ul class="errorlist">
+                    {% for error in field.errors %}
+                    <li>{{ error }}</li>
+                    {% endfor %}
+                </ul>
+                {% endif %}
+            </div>
+        {% endfor %}
     </div>
 
     <h2 style="font-size:1.1rem; margin-bottom:1rem;">Dettagli personalizzati (Compositori, Produttori, Strumenti...)</h2>

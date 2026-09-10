@@ -9,9 +9,10 @@
         <p>{{ artisti.paginator.count }} artisti salvati</p>
     </div>
     
-    <div style="display:flex; gap:0.75rem; align-items:center; flex-wrap:wrap; margin-left:auto;">
-        <!-- View Controls -->
-        <div class="view-controls" style="display:flex; gap:0.3rem; background:var(--bg-secondary); padding:0.25rem; border-radius:30px; box-shadow:0 1px 3px rgba(0,0,0,0.1);">
+    <div style="display:flex; gap:0.75rem; align-items:center; flex-wrap:wrap; margin-left:auto; width:100%; justify-content:space-between;">
+        <div style="display:flex; gap:0.75rem; flex-wrap:wrap;">
+            <!-- View Controls -->
+            <div class="view-controls mobile-hidden" style="display:flex; gap:0.3rem; background:var(--bg-secondary); padding:0.25rem; border-radius:30px; box-shadow:0 1px 3px rgba(0,0,0,0.1);">
             <button type="button" id="btn-grid" title="Vista Griglia" style="background:transparent; border:none; border-radius:50%; width:32px; height:32px; display:flex; align-items:center; justify-content:center; cursor:pointer; color:var(--text-secondary); transition:var(--transition);" class="active-view">
                 <span class="material-symbols-outlined icon-sm">grid_view</span>
             </button>
@@ -36,9 +37,11 @@
             </select>
         </div>
 
-        <a href="{% url 'library:artista_create' %}" class="btn btn-primary" style="border-radius:30px;">
-            <span class="material-symbols-outlined">add</span> Nuovo Artista
-        </a>
+            </div>
+            <a href="{% url 'library:artista_create' %}" class="btn btn-primary btn-flex-mobile" style="border-radius:30px;">
+                <span class="material-symbols-outlined">add</span> Nuovo Artista
+            </a>
+        </div>
     </div>
 </div>
 
@@ -146,7 +149,7 @@
 
 <div id="main-container">
 {% if artisti %}
-<div class="grid">
+<div class="grid mobile-list-override">
     {% for artista in artisti %}
     <a href="{% url 'library:artista_detail' artista.pk %}" class="card" style="text-decoration:none; color:inherit;">
         {% if artista.immagine_profilo %}

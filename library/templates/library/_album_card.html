@@ -31,8 +31,8 @@
             </span>
         {% endif %}
         {% if album.tipo_release == 'concerto' %}
-            <span class="badge badge-yellow">
-                <span class="material-symbols-outlined">theaters</span> Concerto
+            <span class="badge badge-yellow" title="Concerto">
+                <span class="material-symbols-outlined">theaters</span> <span class="mobile-hidden">Concerto</span>
             </span>
         {% endif %}
         {% if album.formato_fisico %}
@@ -46,12 +46,12 @@
                 {% elif album.formato_fisico == 'bluray' %}
                     <span class="material-symbols-outlined">smart_display</span>
                 {% endif %}
-                {{ album.formato_display }}
+                <span class="mobile-hidden">{{ album.formato_display }}</span>
             </span>
         {% endif %}
         {% if album.digitale_acquistato %}
-            <span class="badge" style="background:var(--info); color:white;">
-                <span class="material-symbols-outlined">download</span> Digitale
+            <span class="badge" style="background:var(--info); color:white;" title="Digitale Acquistato">
+                <span class="material-symbols-outlined">download</span> <span class="mobile-hidden">Digitale</span>
             </span>
         {% endif %}
     </div>

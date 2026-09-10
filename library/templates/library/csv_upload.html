@@ -18,7 +18,20 @@
     </div>
 </div>
 
-<div style="display:grid; grid-template-columns:1fr 1fr; gap:2rem; align-items:start;">
+<style>
+    .csv-layout {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 2rem;
+        align-items: start;
+    }
+    @media (max-width: 768px) {
+        .csv-layout {
+            grid-template-columns: minmax(0, 1fr);
+        }
+    }
+</style>
+<div class="csv-layout">
     <!-- Upload Form -->
     <div class="card-static">
         <h3 style="font-size:1.05rem; font-weight:700; margin-bottom:1rem; display:flex; align-items:center; gap:0.4rem;">
@@ -51,10 +64,16 @@
     </div>
 
     <!-- Formato CSV -->
-    <div class="card-static">
-        <h3 style="font-size:1.05rem; font-weight:700; margin-bottom:1rem; display:flex; align-items:center; gap:0.4rem;">
-            <span class="material-symbols-outlined icon-sm">description</span> Formato CSV
-        </h3>
+    <div class="card-static" id="csv-format-card">
+        <div class="mobile-only" style="margin-bottom:1rem;">
+            <button type="button" class="btn btn-secondary" style="width:100%; justify-content:center;" onclick="document.getElementById('csv-format-content').style.display = document.getElementById('csv-format-content').style.display === 'none' ? 'block' : 'none'">
+                <span class="material-symbols-outlined">info</span> Mostra/Nascondi Formato CSV
+            </button>
+        </div>
+        <div id="csv-format-content" class="csv-format-content-wrapper">
+            <h3 style="font-size:1.05rem; font-weight:700; margin-bottom:1rem; display:flex; align-items:center; gap:0.4rem;">
+                <span class="material-symbols-outlined icon-sm">description</span> Formato CSV
+            </h3>
         <p style="font-size:0.85rem; color:var(--text-secondary); margin-bottom:1rem;">
             Il file CSV deve avere un header con i seguenti campi:
         </p>
@@ -69,12 +88,12 @@
                     </tr>
                 </thead>
                 <tbody>
-                    <tr><td><code>titolo</code></td><td><span class="material-symbols-outlined icon-sm" style="color:var(--success);">check_circle</span></td><td>Testo</td></tr>
-                    <tr><td><code>artista</code></td><td><span class="material-symbols-outlined icon-sm" style="color:var(--success);">check_circle</span></td><td>Testo</td></tr>
-                    <tr><td><code>anno_uscita</code></td><td><span class="material-symbols-outlined icon-sm" style="color:var(--success);">check_circle</span></td><td>Numero</td></tr>
-                    <tr><td><code>tipo_release</code></td><td><span class="material-symbols-outlined icon-sm" style="color:var(--text-muted);">remove</span></td><td>album / concerto</td></tr>
-                    <tr><td><code>formato_fisico</code></td><td><span class="material-symbols-outlined icon-sm" style="color:var(--text-muted);">remove</span></td><td>cd / vinile / dvd / bluray</td></tr>
-                    <tr><td><code>canzoni</code></td><td><span class="material-symbols-outlined icon-sm" style="color:var(--text-muted);">remove</span></td><td>Testo (separate da |)</td></tr>
+                    <tr><td data-label="Campo"><code>titolo</code></td><td data-label="Obbligatorio"><span class="material-symbols-outlined icon-sm" style="color:var(--success);">check_circle</span></td><td data-label="Tipo">Testo</td></tr>
+                    <tr><td data-label="Campo"><code>artista</code></td><td data-label="Obbligatorio"><span class="material-symbols-outlined icon-sm" style="color:var(--success);">check_circle</span></td><td data-label="Tipo">Testo</td></tr>
+                    <tr><td data-label="Campo"><code>anno_uscita</code></td><td data-label="Obbligatorio"><span class="material-symbols-outlined icon-sm" style="color:var(--success);">check_circle</span></td><td data-label="Tipo">Numero</td></tr>
+                    <tr><td data-label="Campo"><code>tipo_release</code></td><td data-label="Obbligatorio"><span class="material-symbols-outlined icon-sm" style="color:var(--text-muted);">remove</span></td><td data-label="Tipo">album / concerto</td></tr>
+                    <tr><td data-label="Campo"><code>formato_fisico</code></td><td data-label="Obbligatorio"><span class="material-symbols-outlined icon-sm" style="color:var(--text-muted);">remove</span></td><td data-label="Tipo">cd / vinile / dvd / bluray</td></tr>
+                    <tr><td data-label="Campo"><code>canzoni</code></td><td data-label="Obbligatorio"><span class="material-symbols-outlined icon-sm" style="color:var(--text-muted);">remove</span></td><td data-label="Tipo">Testo (separate da |)</td></tr>
                 </tbody>
             </table>
         </div>
@@ -86,6 +105,16 @@ OK Computer,Radiohead,1997,album,cd,Airbag|Paranoid Android|Subterranean Homesic
 Random Access Memories,Daft Punk,2013,album,vinile,Give Life Back to Music|The Game of Love
 Pulse,Pink Floyd,1995,concerto,dvd,Shine On You Crazy Diamond|Learning to Fly</code>
         </div>
+        </div>
     </div>
 </div>
+</div>
+
+<style>
+    @media (max-width: 768px) {
+        #csv-format-content {
+            display: none;
+        }
+    }
+</style>
 {% endblock %}
