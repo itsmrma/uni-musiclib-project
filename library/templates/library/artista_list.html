@@ -1,0 +1,279 @@
+{% extends "library/base.html" %}
+
+{% block title %}Artisti — Music Library{% endblock %}
+
+{% block content %}
+<div class="page-actions" style="margin-bottom: 1.5rem; flex-wrap:wrap;">
+    <div class="page-header" style="margin-bottom: 0;">
+        <h1>I Tuoi Artisti</h1>
+        <p>{{ artisti.paginator.count }} artisti salvati</p>
+    </div>
+    
+    <div style="display:flex; gap:0.75rem; align-items:center; flex-wrap:wrap; margin-left:auto;">
+        <!-- View Controls -->
+        <div class="view-controls" style="display:flex; gap:0.3rem; background:var(--bg-secondary); padding:0.25rem; border-radius:30px; box-shadow:0 1px 3px rgba(0,0,0,0.1);">
+            <button type="button" id="btn-grid" title="Vista Griglia" style="background:transparent; border:none; border-radius:50%; width:32px; height:32px; display:flex; align-items:center; justify-content:center; cursor:pointer; color:var(--text-secondary); transition:var(--transition);" class="active-view">
+                <span class="material-symbols-outlined icon-sm">grid_view</span>
+            </button>
+
+            <button type="button" id="btn-list" title="Vista Lista" style="background:transparent; border:none; border-radius:50%; width:32px; height:32px; display:flex; align-items:center; justify-content:center; cursor:pointer; color:var(--text-secondary); transition:var(--transition);">
+                <span class="material-symbols-outlined icon-sm">view_list</span>
+            </button>
+            <div style="width:1px; height:1.2rem; background:var(--border-color); margin:auto 0.3rem;"></div>
+            <button type="button" id="btn-size" title="Dimensione Tile" style="background:transparent; border:none; border-radius:50%; width:32px; height:32px; display:flex; align-items:center; justify-content:center; cursor:pointer; color:var(--text-secondary); transition:var(--transition);">
+                <span class="material-symbols-outlined icon-sm">aspect_ratio</span>
+            </button>
+        </div>
+
+        <!-- Per Page Selector -->
+        <div style="display:flex; align-items:center; background:var(--bg-secondary); padding:0 0 0 0.5rem; border-radius:30px; box-shadow:0 1px 3px rgba(0,0,0,0.1); height:40px; box-sizing:border-box;">
+            <span class="material-symbols-outlined icon-sm" style="color:var(--text-secondary); margin-right:0.2rem;">format_list_numbered</span>
+            <select id="per-page-select" class="custom-select" title="Elementi per pagina">
+                <option value="10" {% if request.GET.per_page == "10" %}selected{% endif %}>10</option>
+                <option value="25" {% if request.GET.per_page == "25" or not request.GET.per_page %}selected{% endif %}>25</option>
+                <option value="50" {% if request.GET.per_page == "50" %}selected{% endif %}>50</option>
+                <option value="100" {% if request.GET.per_page == "100" %}selected{% endif %}>100</option>
+            </select>
+        </div>
+
+        <a href="{% url 'library:artista_create' %}" class="btn btn-primary" style="border-radius:30px;">
+            <span class="material-symbols-outlined">add</span> Nuovo Artista
+        </a>
+    </div>
+</div>
+
+<style>
+    .active-view { background: var(--bg-primary) !important; color: var(--accent-primary) !important; }
+    
+    /* Dynamic Grid */
+    .grid {
+        display: grid;
+        gap: 1.5rem;
+        transition: grid-template-columns 0.3s ease;
+    }
+    .grid[data-size="small"] { grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); }
+    .grid[data-size="medium"] { grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); }
+    .grid[data-size="large"] { grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); }
+    
+    /* Image Sizing Overrides */
+    .card-img-container {
+        width: 150px;
+        height: 150px;
+        margin: 0 auto 1rem auto;
+        border-radius: 50%;
+        overflow: hidden;
+        transition: width 0.3s ease, height 0.3s ease;
+    }
+    
+    .grid[data-size="small"] .card-img-container {
+        width: 100px;
+        height: 100px;
+    }
+    .grid[data-size="large"] .card-img-container {
+        width: 220px;
+        height: 220px;
+    }
+    .card-img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        display: block;
+        transition: transform 0.4s ease;
+    }
+    .card:hover .card-img { transform: scale(1.05); }
+    .card-text-content { text-align: center; }
+
+    /* List View Overrides for Card */
+    .view-mode-list .grid {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+    }
+    .view-mode-list .card {
+        display: flex;
+        align-items: center;
+        gap: 1.5rem;
+        padding: 1rem;
+    }
+    .view-mode-list .card-text-content {
+        text-align: left;
+    }
+    .view-mode-list .card .card-img-container {
+        margin: 0;
+        width: 80px;
+        height: 80px;
+        flex-shrink: 0;
+        border-radius: 50%;
+    }
+    .view-mode-list .card h3 {
+        margin-bottom: 0.2rem;
+        font-size: 1.1rem;
+    }
+    .view-mode-list .card p {
+        margin-bottom: 0;
+    }
+    
+    /* Gestione dimensioni in List Mode */
+    .view-mode-list .grid[data-size="small"] .card {
+        padding: 0.5rem 1rem;
+        gap: 1rem;
+    }
+    .view-mode-list .grid[data-size="small"] .card .card-img-container {
+        display: none !important;
+    }
+    .view-mode-list .card .card-text-content {
+        flex-direction: row !important;
+        align-items: center !important;
+        gap: 1.5rem;
+    }
+    .view-mode-list .card .card-stars-container {
+        margin-top: 0 !important;
+    }
+    .view-mode-list .grid[data-size="small"] .card h3 {
+        font-size: 1rem;
+    }
+    .view-mode-list .grid[data-size="large"] .card {
+        padding: 1.5rem;
+    }
+    .view-mode-list .grid[data-size="large"] .card .card-img-container {
+        width: 120px;
+        height: 120px;
+    }
+    .view-mode-list .grid[data-size="large"] .card h3 {
+        font-size: 1.3rem;
+    }
+</style>
+
+<div id="main-container">
+{% if artisti %}
+<div class="grid">
+    {% for artista in artisti %}
+    <a href="{% url 'library:artista_detail' artista.pk %}" class="card" style="text-decoration:none; color:inherit;">
+        {% if artista.immagine_profilo %}
+        <div class="card-img-container">
+            <img src="{{ artista.immagine_profilo.url }}" alt="{{ artista.nome }}" class="card-img">
+        </div>
+        {% else %}
+        <div class="card-img-container" style="background: var(--accent-gradient); opacity:0.3; display:flex; align-items:center; justify-content:center;">
+            <span class="material-symbols-outlined" style="font-size:48px; opacity:0.5;">person</span>
+        </div>
+        {% endif %}
+
+        <div class="card-text-content" style="flex: 1; display: flex; flex-direction: column; align-items: flex-start;">
+            <div class="card-text-inner">
+                <h3 style="font-size:1.05rem; font-weight:700; margin-bottom:0.3rem;">{{ artista.nome }}</h3>
+                <p style="font-size:0.85rem; color:var(--text-secondary); display:flex; align-items:center; gap:0.3rem;">
+                    <span class="material-symbols-outlined icon-sm">album</span>
+                    {{ artista.album.count }} album
+                </p>
+            </div>
+            {% if artista.user_voto %}
+                <div class="card-stars-container" style="margin-top: 0.2rem;">
+                    {% include "library/_star_rating.html" with item_type="artista" item_id=artista.pk current_rating=artista.user_voto interactive=False %}
+                </div>
+            {% endif %}
+        </div>
+    </a>
+    {% endfor %}
+</div>
+
+{% if is_paginated %}
+<div class="pagination">
+    <span class="step-links" style="display:flex; align-items:center; gap:0.5rem; justify-content:center;">
+        {% if page_obj.has_previous %}
+            <a href="?page=1{% if request.GET.sort %}&sort={{ request.GET.sort }}{% endif %}{% if request.GET.per_page %}&per_page={{ request.GET.per_page }}{% endif %}" title="Prima Pagina" style="display:inline-flex; align-items:center; justify-content:center; padding:0; width:34px; height:34px;"><span class="material-symbols-outlined" style="font-size:1.2rem; margin:0;">first_page</span></a>
+            <a href="?page={{ page_obj.previous_page_number }}{% if request.GET.sort %}&sort={{ request.GET.sort }}{% endif %}{% if request.GET.per_page %}&per_page={{ request.GET.per_page }}{% endif %}" title="Precedente" style="display:inline-flex; align-items:center; justify-content:center; padding:0; width:34px; height:34px;"><span class="material-symbols-outlined" style="font-size:1.2rem; margin:0;">chevron_left</span></a>
+        {% endif %}
+
+        <span class="current">
+            Pagina {{ page_obj.number }} di {{ page_obj.paginator.num_pages }}
+        </span>
+
+        {% if page_obj.has_next %}
+            <a href="?page={{ page_obj.next_page_number }}{% if request.GET.sort %}&sort={{ request.GET.sort }}{% endif %}{% if request.GET.per_page %}&per_page={{ request.GET.per_page }}{% endif %}" title="Successiva" style="display:inline-flex; align-items:center; justify-content:center; padding:0; width:34px; height:34px;"><span class="material-symbols-outlined" style="font-size:1.2rem; margin:0;">chevron_right</span></a>
+            <a href="?page={{ page_obj.paginator.num_pages }}{% if request.GET.sort %}&sort={{ request.GET.sort }}{% endif %}{% if request.GET.per_page %}&per_page={{ request.GET.per_page }}{% endif %}" title="Ultima Pagina" style="display:inline-flex; align-items:center; justify-content:center; padding:0; width:34px; height:34px;"><span class="material-symbols-outlined" style="font-size:1.2rem; margin:0;">last_page</span></a>
+        {% endif %}
+    </span>
+</div>
+{% endif %}
+</div>
+{% else %}
+<div class="empty-state">
+    <span class="material-symbols-outlined">mic</span>
+    <h3>Nessun artista trovato</h3>
+    <p>Aggiungi un artista manualmente o cercalo tramite MusicBrainz per iniziare.</p>
+    <a href="{% url 'library:artista_create' %}" class="btn btn-primary" style="margin-top:1rem;">
+        <span class="material-symbols-outlined">add</span> Aggiungi Artista
+    </a>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const mainContainer = document.getElementById('main-container');
+    const btnGrid = document.getElementById('btn-grid');
+    const btnList = document.getElementById('btn-list');
+    const btnSize = document.getElementById('btn-size');
+    const grids = document.querySelectorAll('.grid');
+    if(!mainContainer) return;
+    
+    // View Mode (Grid/List)
+    const currentMode = localStorage.getItem('albumViewMode') || 'grid'; // Uso stessa preferenza
+    
+    function setViewMode(mode) {
+        if (mode === 'list') {
+            mainContainer.classList.add('view-mode-list');
+            if(btnList) btnList.classList.add('active-view');
+            if(btnGrid) btnGrid.classList.remove('active-view');
+            if(btnSize) btnSize.style.display = 'flex';
+        } else {
+            mainContainer.classList.remove('view-mode-list');
+            if(btnGrid) btnGrid.classList.add('active-view');
+            if(btnList) btnList.classList.remove('active-view');
+            if(btnSize) btnSize.style.display = 'flex';
+        }
+        localStorage.setItem('albumViewMode', mode);
+    }
+    
+    if(btnGrid) btnGrid.addEventListener('click', () => setViewMode('grid'));
+    if(btnList) btnList.addEventListener('click', () => setViewMode('list'));
+    
+    // Tile Size (Grid)
+    const sizes = ['small', 'medium', 'large'];
+    let currentSizeIndex = sizes.indexOf(localStorage.getItem('albumGridSize') || 'medium');
+    if (currentSizeIndex === -1) currentSizeIndex = 1;
+    
+    function setGridSize(size) {
+        grids.forEach(g => g.setAttribute('data-size', size));
+        localStorage.setItem('albumGridSize', size);
+    }
+    
+    if(btnSize) {
+        btnSize.addEventListener('click', () => {
+            currentSizeIndex = (currentSizeIndex + 1) % sizes.length;
+            setGridSize(sizes[currentSizeIndex]);
+        });
+    }
+    
+    // Initialize
+    setViewMode(currentMode);
+    setGridSize(sizes[currentSizeIndex]);
+});
+</script>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const sel = document.getElementById('per-page-select');
+    if (sel) {
+        sel.addEventListener('change', function () {
+            const url = new URL(window.location.href);
+            url.searchParams.set('per_page', this.value);
+            url.searchParams.set('page', '1');
+            window.location.href = url.toString();
+        });
+    }
+});
+</script>
+{% endblock %}

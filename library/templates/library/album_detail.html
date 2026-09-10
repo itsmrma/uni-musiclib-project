@@ -1,0 +1,188 @@
+{% extends "library/base.html" %}
+
+{% block title %}{{ album.titolo }} — Music Library{% endblock %}
+
+{% block content %}
+<div style="margin-bottom:1.5rem; position:relative; z-index:2;">
+    <a href="{% url 'library:album_list' %}" style="font-size:0.85rem; color:var(--text-secondary); display:inline-flex; align-items:center; gap:0.3rem;">
+        <span class="material-symbols-outlined icon-sm">arrow_back</span> Torna alla lista
+    </a>
+</div>
+
+{% if album.copertina %}
+<style>
+    body {
+        position: relative;
+    }
+    body::before {
+        content: "";
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-image: url('{{ album.copertina.url }}');
+        background-size: cover;
+        background-position: center;
+        filter: blur(80px) opacity(0.4);
+        z-index: -1;
+        pointer-events: none;
+    }
+</style>
+{% endif %}
+
+<div class="card-static" style="padding:0; overflow:hidden; position:relative; z-index:2;">
+    <!-- Hero Section -->
+    <div style="display:flex; flex-wrap:wrap; gap:0;">
+        {% if album.copertina %}
+        <div style="flex:0 0 300px; max-width:300px;">
+            <img src="{{ album.copertina.url }}" alt="{{ album.titolo }}"
+                 style="width:100%; height:100%; min-height:300px; object-fit:cover; display:block;">
+        </div>
+        {% else %}
+        <div style="flex:0 0 300px; max-width:300px; min-height:300px; background:var(--accent-gradient); opacity:0.4; display:flex; align-items:center; justify-content:center;">
+            <span class="material-symbols-outlined" style="font-size:72px; opacity:0.5;">music_note</span>
+        </div>
+        {% endif %}
+
+        <div style="flex:1; min-width:280px; padding:2rem;">
+            <h1 style="font-size:2rem; font-weight:800; letter-spacing:-0.03em; margin-bottom:0.3rem;">{{ album.titolo }}</h1>
+            <p style="font-size:1.1rem; color:var(--accent-secondary); font-weight:500; margin-bottom:1rem;">
+                <a href="{% url 'library:artista_detail' album.artista.pk %}" style="color:var(--accent-secondary);">{{ album.artista.nome }}</a>
+            </p>
+
+            <div style="display:flex; align-items:center; gap:0.5rem; flex-wrap:wrap; margin-bottom:1.5rem;">
+                <span class="badge badge-accent">{{ album.anno_uscita }}</span>
+                {% if album.durata_totale_minuti %}
+                    <span class="badge" style="background:var(--bg-secondary); border:1px solid var(--border-color); color:var(--text-secondary);">
+                        <span class="material-symbols-outlined icon-sm">schedule</span> {{ album.durata_totale_minuti }} min
+                    </span>
+                {% endif %}
+                {% if album.tipo_release == 'concerto' %}
+                    <span class="badge badge-yellow">
+                        <span class="material-symbols-outlined">theaters</span> Concerto
+                    </span>
+                {% else %}
+                    <span class="badge badge-blue">
+                        <span class="material-symbols-outlined">album</span> Album
+                    </span>
+                {% endif %}
+                {% if album.formato_fisico %}
+                    <span class="badge badge-green">
+                        {% if album.formato_fisico == 'cd' %}
+                            <span class="material-symbols-outlined">album</span>
+                        {% elif album.formato_fisico == 'vinile' %}
+                            <span class="material-symbols-outlined">fiber_smart_record</span>
+                        {% elif album.formato_fisico == 'dvd' %}
+                            <span class="material-symbols-outlined">smart_display</span>
+                        {% elif album.formato_fisico == 'bluray' %}
+                            <span class="material-symbols-outlined">smart_display</span>
+                        {% endif %}
+                        {{ album.formato_display }}
+                    </span>
+                {% endif %}
+                {% if album.digitale_acquistato %}
+                    <span class="badge" style="background:var(--info); color:white;">
+                        <span class="material-symbols-outlined">download</span> Digitale
+                    </span>
+                {% endif %}
+            </div>
+
+            <div style="margin-bottom: 1rem;">
+                {% include "library/_star_rating.html" with item_type="album" item_id=album.pk current_rating=user_voto interactive=True %}
+            </div>
+
+            <div style="display:flex; gap:0.75rem; flex-wrap:wrap;">
+                <a href="{% url 'library:album_update' album.pk %}" class="btn btn-secondary">
+                    <span class="material-symbols-outlined">edit</span> Modifica
+                </a>
+                <a href="{% url 'library:album_delete' album.pk %}" class="btn btn-danger">
+                    <span class="material-symbols-outlined">delete</span> Elimina
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Tracce -->
+<div style="margin-top:2rem;">
+    <h2 style="font-size:1.3rem; font-weight:700; margin-bottom:1rem; letter-spacing:-0.02em; display:flex; align-items:center; gap:0.5rem;">
+        <span class="material-symbols-outlined">queue_music</span>
+        Tracce
+        <span style="font-size:0.85rem; color:var(--text-secondary); font-weight:400;">({{ canzoni.count }})</span>
+    </h2>
+
+    {% if canzoni %}
+    <div style="background:var(--bg-secondary); border-radius:var(--radius-md); border:1px solid var(--border-color); overflow:hidden;">
+        {% for canzone in canzoni %}
+        <div style="display:flex; justify-content:space-between; padding:0.8rem 1rem; border-bottom:1px solid var(--border-color); align-items:center;" class="hover-bg">
+            <div style="display:flex; gap:1rem; align-items:center;">
+                <span style="color:var(--text-secondary); width:20px; text-align:right; font-size:0.9rem;">{{ canzone.numero_traccia }}</span>
+                <a href="{% url 'library:canzone_detail' canzone.pk %}" style="font-weight:500; text-decoration:none;">{{ canzone.titolo }}</a>
+            </div>
+            <div style="display:flex; align-items:center; gap:1rem;">
+                {% if canzone.user_voto %}
+                    {% include "library/_star_rating.html" with item_type="canzone" item_id=canzone.pk current_rating=canzone.user_voto interactive=False %}
+                {% endif %}
+                {% if canzone.durata_formattata %}
+                <span style="color:var(--text-secondary); font-size:0.85rem;">{{ canzone.durata_formattata }}</span>
+                {% endif %}
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="card-static" style="text-align:center; padding:2rem; color:var(--text-secondary);">
+        <p>Nessuna traccia registrata per questo album.</p>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Voti -->
+{% if voti %}
+<div style="margin-top:2rem;">
+    <h2 style="font-size:1.3rem; font-weight:700; margin-bottom:1rem; display:flex; align-items:center; gap:0.5rem;">
+        <span class="material-symbols-outlined">star</span> Voti
+    </h2>
+    <div style="display:flex; flex-wrap:wrap; gap:1rem;">
+        {% for voto in voti %}
+        <div class="card-static" style="padding:1rem 1.25rem;">
+            <p style="font-weight:600;">{{ voto.utente.username }}</p>
+            <p style="color:var(--warning); font-size:1.2rem; letter-spacing:2px;">
+                {% for i in "12345" %}
+                    {% if forloop.counter <= voto.punteggio %}
+                        <span class="material-symbols-outlined icon-filled" style="font-size:18px;">star</span>
+                    {% else %}
+                        <span class="material-symbols-outlined" style="font-size:18px;">star</span>
+                    {% endif %}
+                {% endfor %}
+            </p>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endif %}
+
+<!-- Post Social -->
+{% if post_social %}
+<div style="margin-top:2rem;">
+    <h2 style="font-size:1.3rem; font-weight:700; margin-bottom:1rem; display:flex; align-items:center; gap:0.5rem;">
+        <span class="material-symbols-outlined">forum</span> Post Social
+    </h2>
+    <div style="display:flex; flex-direction:column; gap:1rem;">
+        {% for post in post_social %}
+        <div class="card-static">
+            <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:0.5rem;">
+                <span style="font-weight:600;">{{ post.utente.username }}</span>
+                <span style="font-size:0.8rem; color:var(--text-secondary);">{{ post.data_creazione|date:"d/m/Y H:i" }}</span>
+            </div>
+            <p style="color:var(--text-secondary);">{{ post.commento }}</p>
+            <p style="margin-top:0.5rem; font-size:0.85rem; color:var(--accent-secondary); display:flex; align-items:center; gap:0.3rem;">
+                <span class="material-symbols-outlined icon-sm icon-filled">favorite</span> {{ post.like }} like
+            </p>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endif %}
+{% endblock %}

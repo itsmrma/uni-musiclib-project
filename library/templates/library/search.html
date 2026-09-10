@@ -1,0 +1,249 @@
+{% extends 'library/base.html' %}
+{% load static %}
+
+{% block title %}Cerca — Music Library{% endblock %}
+
+{% block content %}
+<div class="search-container" style="max-width: 900px; margin: 0 auto; padding-top: 2rem;">
+    <!-- Box di Ricerca -->
+    <div style="position: relative; margin-bottom: 3rem;">
+        <span class="material-symbols-outlined" style="position: absolute; left: 1.5rem; top: 50%; transform: translateY(-50%); font-size: 2rem; color: var(--text-muted);">search</span>
+        <input type="text" id="searchInput" placeholder="Cerca artisti, album, canzoni o testo..." autocomplete="off"
+            style="width: 100%; padding: 1.5rem 1.5rem 1.5rem 4.5rem; font-size: 1.5rem; border-radius: var(--radius-xl); border: 2px solid var(--border-color); background: var(--bg-card); color: var(--text-primary); outline: none; transition: var(--transition); box-shadow: var(--shadow-md);">
+    </div>
+
+    <!-- Stato Vuoto -->
+    <div id="emptyState" style="text-align: center; color: var(--text-muted); margin-top: 5rem;">
+        <span class="material-symbols-outlined" style="font-size: 6rem; opacity: 0.5; margin-bottom: 1rem;">search</span>
+        <h2 style="font-weight: 500;">Inizia a digitare per cercare</h2>
+        <p style="font-size: 0.95rem;">Cerca per nome artista, titolo album, titolo canzone o parola nel testo.</p>
+    </div>
+
+    <!-- Nessun Risultato -->
+    <div id="noResults" style="display: none; text-align: center; color: var(--text-muted); margin-top: 5rem;">
+        <span class="material-symbols-outlined" style="font-size: 6rem; opacity: 0.5; margin-bottom: 1rem; color: var(--danger);">search_off</span>
+        <h2 style="font-weight: 500;">Nessun risultato trovato</h2>
+        <p style="font-size: 0.95rem;">Prova a cercare con parole diverse.</p>
+    </div>
+
+    <!-- Contenitore Risultati -->
+    <div id="resultsContainer" style="display: none;">
+        
+        <!-- Artisti -->
+        <div id="artistiSection" style="display: none; margin-bottom: 2.5rem;">
+            <h3 style="font-size: 1.25rem; font-weight: 600; margin-bottom: 1rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem; color: var(--accent-secondary);">Artisti</h3>
+            <div id="artistiList" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 1rem;"></div>
+        </div>
+
+        <!-- Album -->
+        <div id="albumSection" style="display: none; margin-bottom: 2.5rem;">
+            <h3 style="font-size: 1.25rem; font-weight: 600; margin-bottom: 1rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem; color: var(--accent-secondary);">Album</h3>
+            <div id="albumList" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 1rem;"></div>
+        </div>
+
+        <!-- Canzoni -->
+        <div id="canzoniSection" style="display: none; margin-bottom: 2.5rem;">
+            <h3 style="font-size: 1.25rem; font-weight: 600; margin-bottom: 1rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem; color: var(--accent-secondary);">Canzoni</h3>
+            <div id="canzoniList" style="display: flex; flex-direction: column; gap: 0.75rem;"></div>
+        </div>
+
+        <!-- Canzoni (Testo) -->
+        <div id="canzoniTestoSection" style="display: none;">
+            <h3 style="font-size: 1.25rem; font-weight: 600; margin-bottom: 1rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem; color: var(--accent-secondary);">Testo</h3>
+            <div id="canzoniTestoList" style="display: flex; flex-direction: column; gap: 0.75rem;"></div>
+        </div>
+
+    </div>
+</div>
+
+<style>
+    #searchInput:focus {
+        border-color: var(--accent-primary);
+        box-shadow: var(--shadow-glow);
+    }
+    .search-card {
+        background: var(--bg-card);
+        border: 1px solid var(--border-color);
+        border-radius: var(--radius-md);
+        padding: 1rem;
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        transition: var(--transition);
+        text-decoration: none;
+        color: var(--text-primary);
+    }
+    .search-card:hover {
+        background: var(--bg-card-hover);
+        border-color: var(--border-glow);
+        transform: translateY(-2px);
+        box-shadow: var(--shadow-md);
+    }
+    .search-img {
+        width: 50px;
+        height: 50px;
+        border-radius: var(--radius-sm);
+        object-fit: cover;
+        background: var(--bg-secondary);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    .search-img.rounded-full {
+        border-radius: 50%;
+    }
+    .snippet {
+        font-size: 0.85rem;
+        color: var(--text-secondary);
+        font-style: italic;
+        background: rgba(var(--accent-rgb), 0.05);
+        padding: 0.4rem 0.6rem;
+        border-radius: var(--radius-sm);
+        margin-top: 0.4rem;
+        border-left: 2px solid var(--accent-primary);
+    }
+</style>
+
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const input = document.getElementById('searchInput');
+        const emptyState = document.getElementById('emptyState');
+        const noResults = document.getElementById('noResults');
+        const resultsContainer = document.getElementById('resultsContainer');
+        
+        const artistiSection = document.getElementById('artistiSection');
+        const artistiList = document.getElementById('artistiList');
+        
+        const albumSection = document.getElementById('albumSection');
+        const albumList = document.getElementById('albumList');
+        
+        const canzoniSection = document.getElementById('canzoniSection');
+        const canzoniList = document.getElementById('canzoniList');
+        
+        const canzoniTestoSection = document.getElementById('canzoniTestoSection');
+        const canzoniTestoList = document.getElementById('canzoniTestoList');
+
+        let debounceTimer;
+
+        input.focus();
+
+        input.addEventListener('input', (e) => {
+            const query = e.target.value.trim();
+            
+            clearTimeout(debounceTimer);
+
+            if (!query) {
+                emptyState.style.display = 'block';
+                noResults.style.display = 'none';
+                resultsContainer.style.display = 'none';
+                return;
+            }
+
+            debounceTimer = setTimeout(() => {
+                fetch(`{% url 'library:api_search' %}?q=${encodeURIComponent(query)}`)
+                    .then(res => res.json())
+                    .then(data => {
+                        emptyState.style.display = 'none';
+                        
+                        const hasArtisti = data.artisti && data.artisti.length > 0;
+                        const hasAlbum = data.album && data.album.length > 0;
+                        const hasCanzoni = data.canzoni && data.canzoni.length > 0;
+                        const hasCanzoniTesto = data.canzoni_testo && data.canzoni_testo.length > 0;
+
+                        if (!hasArtisti && !hasAlbum && !hasCanzoni && !hasCanzoniTesto) {
+                            noResults.style.display = 'block';
+                            resultsContainer.style.display = 'none';
+                            return;
+                        }
+
+                        noResults.style.display = 'none';
+                        resultsContainer.style.display = 'block';
+
+                        // Render Artisti
+                        if (hasArtisti) {
+                            artistiSection.style.display = 'block';
+                            artistiList.innerHTML = data.artisti.map(a => `
+                                <a href="${a.url}" class="search-card">
+                                    ${a.image_url 
+                                        ? `<img src="${a.image_url}" class="search-img rounded-full">` 
+                                        : `<div class="search-img rounded-full"><span class="material-symbols-outlined">person</span></div>`
+                                    }
+                                    <div style="overflow: hidden;">
+                                        <div style="font-weight: 600; white-space: nowrap; text-overflow: ellipsis; overflow: hidden;">${a.nome}</div>
+                                    </div>
+                                </a>
+                            `).join('');
+                        } else {
+                            artistiSection.style.display = 'none';
+                        }
+
+                        // Render Album
+                        if (hasAlbum) {
+                            albumSection.style.display = 'block';
+                            albumList.innerHTML = data.album.map(a => `
+                                <a href="${a.url}" class="search-card">
+                                    ${a.image_url 
+                                        ? `<img src="${a.image_url}" class="search-img">` 
+                                        : `<div class="search-img"><span class="material-symbols-outlined">album</span></div>`
+                                    }
+                                    <div style="overflow: hidden;">
+                                        <div style="font-weight: 600; white-space: nowrap; text-overflow: ellipsis; overflow: hidden;">${a.titolo}</div>
+                                        <div style="font-size: 0.8rem; color: var(--text-secondary);">${a.artista}</div>
+                                    </div>
+                                </a>
+                            `).join('');
+                        } else {
+                            albumSection.style.display = 'none';
+                        }
+
+                        // Render Canzoni
+                        if (hasCanzoni) {
+                            canzoniSection.style.display = 'block';
+                            canzoniList.innerHTML = data.canzoni.map(c => `
+                                <a href="${c.url}" class="search-card" style="align-items: flex-start;">
+                                    ${c.image_url 
+                                        ? `<img src="${c.image_url}" class="search-img" style="width: 40px; height: 40px;">` 
+                                        : `<div class="search-img" style="width: 40px; height: 40px;"><span class="material-symbols-outlined">music_note</span></div>`
+                                    }
+                                    <div style="flex: 1; overflow: hidden;">
+                                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.2rem;">
+                                            <div style="font-weight: 600;">${c.titolo}</div>
+                                            <div style="font-size: 0.8rem; color: var(--text-secondary);">${c.artista} • ${c.album}</div>
+                                        </div>
+                                    </div>
+                                </a>
+                            `).join('');
+                        } else {
+                            canzoniSection.style.display = 'none';
+                        }
+
+                        // Render Canzoni Testo
+                        if (hasCanzoniTesto) {
+                            canzoniTestoSection.style.display = 'block';
+                            canzoniTestoList.innerHTML = data.canzoni_testo.map(c => `
+                                <a href="${c.url}" class="search-card" style="align-items: flex-start;">
+                                    ${c.image_url 
+                                        ? `<img src="${c.image_url}" class="search-img" style="width: 40px; height: 40px;">` 
+                                        : `<div class="search-img" style="width: 40px; height: 40px;"><span class="material-symbols-outlined">music_note</span></div>`
+                                    }
+                                    <div style="flex: 1; overflow: hidden;">
+                                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.2rem;">
+                                            <div style="font-weight: 600;">${c.titolo}</div>
+                                            <div style="font-size: 0.8rem; color: var(--text-secondary);">${c.artista} • ${c.album}</div>
+                                        </div>
+                                        ${c.snippet ? `<div class="snippet">"${c.snippet}"</div>` : ''}
+                                    </div>
+                                </a>
+                            `).join('');
+                        } else {
+                            canzoniTestoSection.style.display = 'none';
+                        }
+                    })
+                    .catch(err => {
+                        console.error('Error fetching search results:', err);
+                    });
+            }, 300);
+        });
+    });
+</script>
+{% endblock %}

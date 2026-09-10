@@ -1,0 +1,272 @@
+{% extends "library/base.html" %}
+
+{% block extra_css %}
+<style>
+    .password-reqs {
+        margin-top: 0.5rem;
+        display: flex;
+        flex-direction: column;
+        gap: 0.35rem;
+        font-size: 0.82rem;
+    }
+    .req-item {
+        display: flex;
+        align-items: center;
+        gap: 0.45rem;
+        color: var(--text-secondary);
+        transition: color 0.2s ease, font-weight 0.2s ease;
+    }
+    .req-item .req-icon-container {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 18px;
+        height: 18px;
+        flex-shrink: 0;
+    }
+    .req-item .req-icon {
+        font-size: 8px;
+        transition: font-size 0.15s ease, color 0.2s ease;
+    }
+    .req-item.valid {
+        color: var(--success);
+        font-weight: 500;
+    }
+    .req-item.valid .req-icon {
+        font-size: 18px;
+        color: var(--success);
+    }
+    .req-item.invalid {
+        color: var(--danger);
+        font-weight: 500;
+    }
+    .req-item.invalid .req-icon {
+        font-size: 18px;
+        color: var(--danger);
+    }
+    
+    /* Outline per i campi input */
+    .form-input.is-invalid {
+        outline: 2px solid var(--danger);
+        border-color: var(--danger);
+    }
+    .form-input.is-valid {
+        outline: 2px solid var(--success);
+        border-color: var(--success);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div style="max-width: 400px; margin: 4rem auto; background: var(--bg-secondary); padding: 2rem; border-radius: 12px; border: 1px solid var(--border-color);">
+    <h2 style="text-align: center; margin-bottom: 2rem;">Registrazione</h2>
+    
+    <form method="post" class="form-container">
+        {% csrf_token %}
+        
+        {% for field in form %}
+            <div class="form-group">
+                <label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
+                {{ field }}
+                {% if field.name == 'password1' %}
+                    <div id="password-requirements" class="password-reqs">
+                        <div id="req-length" class="req-item">
+                            <span class="req-icon-container">
+                                <span class="material-symbols-outlined req-icon">fiber_manual_record</span>
+                            </span>
+                            <span>Almeno 8 caratteri</span>
+                        </div>
+                        <div id="req-number" class="req-item">
+                            <span class="req-icon-container">
+                                <span class="material-symbols-outlined req-icon">fiber_manual_record</span>
+                            </span>
+                            <span>Almeno un numero</span>
+                        </div>
+                        <div id="req-symbol" class="req-item">
+                            <span class="req-icon-container">
+                                <span class="material-symbols-outlined req-icon">fiber_manual_record</span>
+                            </span>
+                            <span>Almeno un simbolo</span>
+                        </div>
+                    </div>
+                {% elif field.help_text %}
+                    <p style="font-size: 0.8rem; color: var(--text-secondary); margin-top: 0.25rem;">{{ field.help_text }}</p>
+                {% endif %}
+                {% if field.errors and field.name != 'password1' %}
+                    <ul style="color: var(--danger); font-size: 0.85rem; padding-left: 1rem; margin-top: 0.25rem;">
+                        {% for error in field.errors %}
+                            <li>{{ error }}</li>
+                        {% endfor %}
+                    </ul>
+                {% endif %}
+            </div>
+        {% endfor %}
+
+        <button type="submit" class="btn btn-primary" style="width: 100%; justify-content: center; margin-top: 1rem;">
+            Registrati
+            <span class="material-symbols-outlined">person_add</span>
+        </button>
+    </form>
+    
+    <div style="text-align: center; margin-top: 1.5rem; font-size: 0.9rem;">
+        <p style="color: var(--text-secondary);">
+            Hai già un account? 
+            <a href="{% url 'library:login' %}" style="color: var(--accent-primary); text-decoration: none; font-weight: 500;">Accedi qui</a>
+        </p>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const passwordInput = document.querySelector('input[name="password1"]') || document.getElementById('id_password1');
+        const password2Input = document.querySelector('input[name="password2"]') || document.getElementById('id_password2');
+        const emailInput = document.querySelector('input[name="email"]') || document.getElementById('id_email');
+        const form = document.querySelector('.form-container') || document.querySelector('form');
+        
+        const reqLength = document.getElementById('req-length');
+        const reqNumber = document.getElementById('req-number');
+        const reqSymbol = document.getElementById('req-symbol');
+
+        if (!passwordInput || !reqLength || !reqNumber || !reqSymbol) return;
+
+        const passwordHasErrors = {% if form.password1.errors %}true{% else %}false{% endif %};
+        
+        // Applica errori server-side esistenti per aggiungere outline rosso iniziale
+        {% for field in form %}
+            {% if field.errors %}
+                const fieldEl_{{ field.name }} = document.getElementById('{{ field.id_for_label }}');
+                if (fieldEl_{{ field.name }}) fieldEl_{{ field.name }}.classList.add('is-invalid');
+            {% endif %}
+        {% endfor %}
+
+        function updateRequirement(el, isValid, isActive) {
+            const icon = el.querySelector('.req-icon');
+            el.classList.remove('valid', 'invalid');
+            
+            if (isValid) {
+                el.classList.add('valid');
+                icon.textContent = 'check';
+            } else if (isActive) {
+                el.classList.add('invalid');
+                icon.textContent = 'close';
+            } else {
+                icon.textContent = 'fiber_manual_record';
+            }
+        }
+
+        let isPasswordValid = false;
+
+        function validatePassword() {
+            const val = passwordInput.value || '';
+            const isActive = val.length > 0 || passwordHasErrors || passwordInput.classList.contains('is-invalid');
+            const hasLength = val.length >= 8;
+            const hasNumber = /\d/.test(val);
+            const hasSymbol = /[^A-Za-z0-9\s]/.test(val);
+
+            isPasswordValid = hasLength && hasNumber && hasSymbol;
+
+            updateRequirement(reqLength, hasLength, isActive);
+            updateRequirement(reqNumber, hasNumber, isActive);
+            updateRequirement(reqSymbol, hasSymbol, isActive);
+            
+            if (val.length > 0 && isPasswordValid) {
+                passwordInput.classList.remove('is-invalid');
+                passwordInput.classList.add('is-valid');
+            } else if (val.length === 0) {
+                passwordInput.classList.remove('is-valid');
+                if (!passwordHasErrors) passwordInput.classList.remove('is-invalid');
+            } else {
+                passwordInput.classList.remove('is-valid');
+            }
+            
+            validatePasswordMatch();
+        }
+
+        function validatePasswordMatch() {
+            if (!password2Input) return true;
+            const val1 = passwordInput.value || '';
+            const val2 = password2Input.value || '';
+            
+            password2Input.classList.remove('is-valid', 'is-invalid');
+            if (val2.length > 0) {
+                if (val1 === val2) {
+                    password2Input.classList.add('is-valid');
+                    return true;
+                } else {
+                    password2Input.classList.add('is-invalid');
+                    return false;
+                }
+            }
+            return false;
+        }
+
+        function validateEmail() {
+            if (!emailInput) return true;
+            const val = emailInput.value.trim();
+            if (val.length === 0) {
+                emailInput.classList.remove('is-valid', 'is-invalid');
+                return true; 
+            }
+            // Regex semplice: non ammette spazi, richiede una @ e un punto dopo la @
+            const emailRegex = /^[^@\s]+@[^@\s]+\.[^@\s]+$/;
+            if (emailRegex.test(val)) {
+                emailInput.classList.remove('is-invalid');
+                emailInput.classList.add('is-valid');
+                return true;
+            } else {
+                emailInput.classList.remove('is-valid');
+                emailInput.classList.add('is-invalid');
+                return false;
+            }
+        }
+
+        passwordInput.addEventListener('input', validatePassword);
+        passwordInput.addEventListener('change', validatePassword);
+        
+        if (password2Input) {
+            password2Input.addEventListener('input', validatePasswordMatch);
+            password2Input.addEventListener('change', validatePasswordMatch);
+        }
+        
+        if (emailInput) {
+            emailInput.addEventListener('input', validateEmail);
+            emailInput.addEventListener('change', validateEmail);
+        }
+        
+        validatePassword();
+
+        if (form) {
+            form.addEventListener('submit', function (e) {
+                let isValid = true;
+                
+                if (!isPasswordValid) {
+                    passwordInput.classList.add('is-invalid');
+                    isValid = false;
+                }
+                
+                if (password2Input && (passwordInput.value !== password2Input.value || password2Input.value.length === 0)) {
+                    password2Input.classList.add('is-invalid');
+                    isValid = false;
+                }
+                
+                if (emailInput && emailInput.value.length > 0 && !validateEmail()) {
+                    isValid = false;
+                }
+                
+                if (!isValid) {
+                    e.preventDefault(); 
+                    
+                    const hasLength = passwordInput.value.length >= 8;
+                    const hasNumber = /\d/.test(passwordInput.value);
+                    const hasSymbol = /[^A-Za-z0-9\s]/.test(passwordInput.value);
+                    updateRequirement(reqLength, hasLength, true);
+                    updateRequirement(reqNumber, hasNumber, true);
+                    updateRequirement(reqSymbol, hasSymbol, true);
+                }
+            });
+        }
+    });
+</script>
+{% endblock %}

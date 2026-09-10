@@ -1,0 +1,58 @@
+<a href="{% url 'library:album_detail' album.pk %}" class="card" style="text-decoration:none; color:inherit;">
+    {% if album.copertina %}
+    <div class="card-img-container">
+        <img src="{{ album.copertina.url }}" alt="{{ album.titolo }}" class="card-img">
+    </div>
+    {% else %}
+    <div class="card-img-container" style="background: var(--accent-gradient); opacity:0.3; display:flex; align-items:center; justify-content:center;">
+        <span class="material-symbols-outlined" style="font-size:48px; opacity:0.5;">music_note</span>
+    </div>
+    {% endif %}
+
+    <div class="card-text-content" style="flex: 1; display: flex; flex-direction: column; align-items: flex-start;">
+        <div class="card-text-inner">
+            <h3 style="font-size:1.05rem; font-weight:700; margin-bottom:0.3rem; letter-spacing:-0.01em;">{{ album.titolo }}</h3>
+            {% if not group_by_artist %}
+            <p style="font-size:0.85rem; color:var(--text-secondary); margin-bottom:0.75rem;">{{ album.artista.nome }}</p>
+            {% endif %}
+        </div>
+        {% if album.user_voto %}
+            <div class="card-stars-container" style="margin-top: 0.2rem;">
+                {% include "library/_star_rating.html" with item_type="album" item_id=album.pk current_rating=album.user_voto interactive=False %}
+            </div>
+        {% endif %}
+    </div>
+
+    <div class="badge-container" {% if group_by_artist %}style="display:flex; align-items:center; gap:0.5rem; flex-wrap:wrap; margin-top:0.75rem;"{% else %}style="display:flex; align-items:center; gap:0.5rem; flex-wrap:wrap;"{% endif %}>
+        <span class="badge badge-accent">{{ album.anno_uscita }}</span>
+        {% if album.durata_totale_minuti %}
+            <span class="badge" style="background:var(--bg-secondary); border:1px solid var(--border-color); color:var(--text-secondary);">
+                {{ album.durata_totale_minuti }} min
+            </span>
+        {% endif %}
+        {% if album.tipo_release == 'concerto' %}
+            <span class="badge badge-yellow">
+                <span class="material-symbols-outlined">theaters</span> Concerto
+            </span>
+        {% endif %}
+        {% if album.formato_fisico %}
+            <span class="badge badge-green">
+                {% if album.formato_fisico == 'cd' %}
+                    <span class="material-symbols-outlined">album</span>
+                {% elif album.formato_fisico == 'vinile' %}
+                    <span class="material-symbols-outlined">fiber_smart_record</span>
+                {% elif album.formato_fisico == 'dvd' %}
+                    <span class="material-symbols-outlined">smart_display</span>
+                {% elif album.formato_fisico == 'bluray' %}
+                    <span class="material-symbols-outlined">smart_display</span>
+                {% endif %}
+                {{ album.formato_display }}
+            </span>
+        {% endif %}
+        {% if album.digitale_acquistato %}
+            <span class="badge" style="background:var(--info); color:white;">
+                <span class="material-symbols-outlined">download</span> Digitale
+            </span>
+        {% endif %}
+    </div>
+</a>

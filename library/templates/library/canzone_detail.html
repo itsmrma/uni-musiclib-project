@@ -1,0 +1,294 @@
+{% extends "library/base.html" %}
+
+{% block title %}{{ canzone.titolo }} — Music Library{% endblock %}
+
+{% block content %}
+<div style="margin-bottom:1.5rem;">
+    <a href="{% url 'library:album_detail' canzone.album.pk %}" style="font-size:0.85rem; color:var(--text-secondary); display:inline-flex; align-items:center; gap:0.3rem;">
+        <span class="material-symbols-outlined icon-sm">arrow_back</span> Torna all'album
+    </a>
+</div>
+
+<div class="card-static">
+    <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+        <div>
+            <h1 style="margin-bottom:0.2rem;">{{ canzone.titolo }}</h1>
+            <p style="color:var(--text-secondary); margin-bottom:1rem; display:flex; align-items:center; gap:0.3rem;">
+                Traccia {{ canzone.numero_traccia }} da <a href="{% url 'library:album_detail' canzone.album.pk %}">{{ canzone.album.titolo }}</a>
+                {% if canzone.durata_formattata %} <span style="display:flex; align-items:center; gap:0.15rem; margin-left:0.3rem;"><span class="material-symbols-outlined icon-sm">schedule</span> {{ canzone.durata_formattata }}</span>{% endif %}
+            </p>
+            <div style="margin-bottom: 1.5rem;">
+                {% include "library/_star_rating.html" with item_type="canzone" item_id=canzone.pk current_rating=user_voto interactive=True %}
+            </div>
+        </div>
+        <a href="{% url 'library:canzone_update' canzone.pk %}" class="btn" style="background:var(--bg-secondary); border:1px solid var(--border-color); color:var(--text-primary);">
+            <span class="material-symbols-outlined icon-sm">edit</span> Modifica Metadati
+        </a>
+    </div>
+
+    <h2 style="font-size:1.2rem; margin-top:2rem; margin-bottom:1rem; border-bottom:1px solid var(--border-color); padding-bottom:0.5rem;">
+        <span class="material-symbols-outlined" style="vertical-align:bottom;">info</span> Dettagli e Riconoscimenti
+    </h2>
+    
+    {% if canzone.metadati.all %}
+    <div style="display:grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap:1rem;">
+        {% for meta in canzone.metadati.all %}
+        <div style="background:var(--bg-secondary); border:1px solid var(--border-color); border-radius:var(--radius-sm); padding:0.8rem;">
+            <p style="font-size:0.8rem; color:var(--text-secondary); text-transform:uppercase; font-weight:bold; margin-bottom:0.2rem;">{{ meta.chiave }}</p>
+            <p style="margin:0; font-size:1rem; color:var(--text-primary);">{{ meta.valore }}</p>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <p style="color:var(--text-secondary); font-style:italic;">Nessun dettaglio aggiuntivo presente.</p>
+    {% endif %}
+</div>
+
+    <!-- Sezione Testo (Lyrics) -->
+    <h2 style="font-size:1.2rem; margin-top:3rem; margin-bottom:1rem; border-bottom:1px solid var(--border-color); padding-bottom:0.5rem; display:flex; justify-content:space-between; align-items:flex-end;">
+        <span><span class="material-symbols-outlined" style="vertical-align:bottom;">lyrics</span> Testo della Canzone</span>
+        <button id="btn-edit-lyrics" class="btn btn-secondary" style="padding:0.3rem 0.6rem; font-size:0.85rem;" onclick="toggleLyricsEdit()">
+            <span class="material-symbols-outlined icon-sm">edit</span> Modifica
+        </button>
+    </h2>
+
+    <div id="lyrics-view" style="{% if not canzone.testo %}display:none;{% endif %}">
+        <div id="lyrics-format-container" style="display:none; margin-bottom:1rem; justify-content:flex-end;">
+            <select id="lyrics-jp-format" class="custom-select" style="width:auto; font-size:0.9rem;" onchange="renderLyrics()">
+                <option value="both_styled" selected>Kanji + Romaji (Stilizzato)</option>
+                <option value="both_raw">Testo Originale</option>
+                <option value="kanji">Solo Kanji</option>
+                <option value="romaji">Solo Romaji</option>
+            </select>
+        </div>
+        <div id="lyrics-raw-text" style="display:none;">{{ canzone.testo|default:"" }}</div>
+        <div style="background:var(--bg-secondary); padding:1.5rem; border-radius:var(--radius-md); border:1px solid var(--border-color); font-family:'Inter', -apple-system, BlinkMacSystemFont, sans-serif; font-size:1rem; line-height:1.7; white-space:pre-wrap; color:var(--text-primary);" id="lyrics-content"></div>
+    </div>
+
+    <div id="lyrics-empty" style="{% if canzone.testo %}display:none;{% else %}display:block;{% endif %} color:var(--text-secondary); font-style:italic;">
+        Nessun testo presente per questa canzone. Clicca su Modifica per aggiungerlo.
+    </div>
+
+    <div id="lyrics-edit" style="display:none; margin-top:1rem;">
+        <div style="display:flex; gap:0.5rem; margin-bottom:0.5rem;">
+            <button class="btn" style="background:var(--accent-gradient); color:white;" onclick="fetchLyrics()">
+                <span class="material-symbols-outlined icon-sm">search</span> Cerca Testo Automaticamente
+            </button>
+            <span id="lyrics-fetch-status" style="align-self:center; font-size:0.85rem; color:var(--text-secondary);"></span>
+        </div>
+        <textarea id="lyrics-textarea" rows="15" style="width:100%; padding:1rem; border-radius:var(--radius-md); border:1px solid var(--border-color); background:var(--bg-primary); color:var(--text-primary); font-family:inherit; font-size:1rem; line-height:1.5; resize:vertical;">{{ canzone.testo|default:"" }}</textarea>
+        <div style="margin-top:1rem; display:flex; gap:0.5rem;">
+            <button class="btn btn-primary" onclick="saveLyrics()">Salva Testo</button>
+            <button class="btn btn-secondary" onclick="toggleLyricsEdit()">Annulla</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    const urlSaveLyrics = "{% url 'library:api_save_lyrics' canzone.pk %}";
+    const artistName = "{{ canzone.album.artista.nome|escapejs }}";
+    const songTitle = "{{ canzone.titolo|escapejs }}";
+
+    function toggleLyricsEdit() {
+        const editDiv = document.getElementById('lyrics-edit');
+        const viewDiv = document.getElementById('lyrics-view');
+        const emptyDiv = document.getElementById('lyrics-empty');
+        const btnEdit = document.getElementById('btn-edit-lyrics');
+        const textarea = document.getElementById('lyrics-textarea');
+
+        if (editDiv.style.display === 'none') {
+            editDiv.style.display = 'block';
+            viewDiv.style.display = 'none';
+            emptyDiv.style.display = 'none';
+            btnEdit.style.display = 'none';
+            textarea.focus();
+        } else {
+            editDiv.style.display = 'none';
+            btnEdit.style.display = 'inline-flex';
+            
+            const content = document.getElementById('lyrics-content').textContent.trim();
+            if (content) {
+                viewDiv.style.display = 'block';
+                emptyDiv.style.display = 'none';
+            } else {
+                viewDiv.style.display = 'none';
+                emptyDiv.style.display = 'block';
+            }
+        }
+    }
+
+    function renderLyrics() {
+        const rawText = document.getElementById('lyrics-raw-text').textContent;
+        const jpFormat = document.getElementById('lyrics-jp-format').value;
+        const contentDiv = document.getElementById('lyrics-content');
+        const formatContainer = document.getElementById('lyrics-format-container');
+        
+        const jpLetterRegex = /[\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FAF\u3400-\u4DBF]/g;
+        const hasJp = jpLetterRegex.test(rawText);
+        
+        if (hasJp) {
+            formatContainer.style.display = 'flex';
+        } else {
+            formatContainer.style.display = 'none';
+        }
+        
+        if (jpFormat === 'both_raw' || !rawText || !hasJp) {
+            contentDiv.textContent = rawText;
+            return;
+        }
+        
+        const lines = rawText.split('\n');
+        
+        let parsedLines = [];
+        let sameLineFormatCount = 0;
+        
+        for (let i = 0; i < lines.length; i++) {
+            let line = lines[i].trim();
+            if (!line) {
+                parsedLines.push({ type: 'empty', raw: '' });
+                continue;
+            }
+            
+            let match;
+            let lastIndex = -1;
+            jpLetterRegex.lastIndex = 0;
+            while ((match = jpLetterRegex.exec(line)) !== null) {
+                lastIndex = match.index;
+            }
+            
+            if (lastIndex !== -1) {
+                let kPart = line.substring(0, lastIndex + 1).trim();
+                let rPart = line.substring(lastIndex + 1).trim();
+                if (/[a-zA-Z]/.test(rPart)) {
+                    sameLineFormatCount++;
+                    parsedLines.push({ type: 'mixed', kanji: kPart, romaji: rPart, raw: line });
+                } else {
+                    parsedLines.push({ type: 'jp', text: line, raw: line });
+                }
+            } else {
+                parsedLines.push({ type: 'latin', text: line, raw: line });
+            }
+        }
+        
+        const isSameLineFormat = sameLineFormatCount > 0;
+        const processed = [];
+        
+        for (let i = 0; i < parsedLines.length; i++) {
+            const p = parsedLines[i];
+            
+            if (p.type === 'empty') {
+                processed.push('');
+                continue;
+            }
+            
+            if (isSameLineFormat) {
+                if (jpFormat === 'kanji') {
+                    if (p.type === 'mixed') processed.push(p.kanji);
+                    else processed.push(p.text);
+                } else if (jpFormat === 'romaji') {
+                    if (p.type === 'mixed') processed.push(p.romaji);
+                    else if (p.type === 'latin') processed.push(p.text);
+                } else if (jpFormat === 'both_styled') {
+                    if (p.type === 'mixed') {
+                        const div = document.createElement('div');
+                        div.textContent = p.kanji;
+                        processed.push(div.innerHTML);
+                        processed.push('<span style="font-style:italic; color:var(--text-secondary); font-size:0.95em;">' + p.romaji + '</span>');
+                    } else if (p.type === 'latin') {
+                        processed.push('<span style="font-style:italic; color:var(--text-secondary); font-size:0.95em;">' + p.text + '</span>');
+                    } else {
+                        const div = document.createElement('div');
+                        div.textContent = p.text;
+                        processed.push(div.innerHTML);
+                    }
+                }
+            } else {
+                if (jpFormat === 'kanji') {
+                    if (p.type === 'jp') processed.push(p.text);
+                } else if (jpFormat === 'romaji') {
+                    if (p.type === 'latin') processed.push(p.text);
+                } else if (jpFormat === 'both_styled') {
+                    if (p.type === 'latin') {
+                        processed.push('<span style="font-style:italic; color:var(--text-secondary); font-size:0.95em;">' + p.text + '</span>');
+                    } else if (p.type === 'jp') {
+                        const div = document.createElement('div');
+                        div.textContent = p.text;
+                        processed.push(div.innerHTML);
+                    }
+                }
+            }
+        }
+        
+        let result = processed.join('\n').replace(/\n{3,}/g, '\n\n');
+        
+        if (jpFormat === 'both_styled') {
+            contentDiv.innerHTML = result;
+        } else {
+            contentDiv.textContent = result;
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        if (document.getElementById('lyrics-raw-text').textContent) {
+            renderLyrics();
+        }
+    });
+
+    async function fetchLyrics() {
+        const status = document.getElementById('lyrics-fetch-status');
+        const textarea = document.getElementById('lyrics-textarea');
+        status.textContent = 'Ricerca in corso su lyrics.ovh...';
+        status.style.color = 'var(--text-secondary)';
+
+        try {
+            const res = await fetch(`https://api.lyrics.ovh/v1/${encodeURIComponent(artistName)}/${encodeURIComponent(songTitle)}`);
+            if (res.ok) {
+                const data = await res.json();
+                if (data.lyrics) {
+                    textarea.value = data.lyrics;
+                    status.textContent = 'Testo trovato e inserito!';
+                    status.style.color = 'var(--success)';
+                } else {
+                    status.textContent = 'Testo non trovato.';
+                    status.style.color = 'var(--danger)';
+                }
+            } else {
+                status.textContent = 'Testo non trovato o API non disponibile.';
+                status.style.color = 'var(--danger)';
+            }
+        } catch (err) {
+            console.error(err);
+            status.textContent = 'Errore di connessione.';
+            status.style.color = 'var(--danger)';
+        }
+    }
+
+    async function saveLyrics() {
+        const textarea = document.getElementById('lyrics-textarea');
+        const testo = textarea.value.trim();
+
+        try {
+            const res = await fetch(urlSaveLyrics, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCookie('csrftoken')
+                },
+                body: JSON.stringify({ testo: testo })
+            });
+            const data = await res.json();
+            if (data.success) {
+                document.getElementById('lyrics-raw-text').textContent = testo;
+                renderLyrics();
+                toggleLyricsEdit();
+            } else {
+                alert('Errore nel salvataggio: ' + data.error);
+            }
+        } catch (err) {
+            console.error(err);
+            alert('Errore di connessione.');
+        }
+    }
+</script>
+
+{% endblock %}

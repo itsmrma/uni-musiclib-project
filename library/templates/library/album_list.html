@@ -1,0 +1,321 @@
+{% extends "library/base.html" %}
+
+{% block title %}Album — Music Library{% endblock %}
+
+{% block content %}
+<div class="page-actions" style="margin-bottom: 1.5rem; flex-wrap:wrap;">
+    <div class="page-header" style="margin-bottom: 0;">
+        <h1>La tua Collezione</h1>
+        <p>{{ albums.paginator.count }} album nella libreria</p>
+    </div>
+    
+    <div style="display:flex; gap:0.75rem; align-items:center; flex-wrap:wrap; margin-left:auto;">
+        <!-- Box ordinamento Material UI -->
+        <form method="get" class="sort-box" style="display:flex; gap:0.5rem; align-items:center; background:var(--bg-secondary); padding:0.25rem 0.5rem 0.25rem 1rem; border-radius:30px; box-shadow:0 1px 3px rgba(0,0,0,0.1); flex-wrap:wrap;">
+            <span class="material-symbols-outlined icon-sm" style="color:var(--text-secondary);">sort</span>
+            <select name="sort" id="sort" class="custom-select" onchange="this.form.submit()">
+                <option value="-anno_uscita" {% if current_sort == '-anno_uscita' %}selected{% endif %}>Anno (Recenti)</option>
+                <option value="anno_uscita" {% if current_sort == 'anno_uscita' %}selected{% endif %}>Anno (Meno recenti)</option>
+                <option value="titolo" {% if current_sort == 'titolo' %}selected{% endif %}>Titolo (A-Z)</option>
+                <option value="artista__nome" {% if current_sort == "artista__nome" %}selected{% endif %}>Artista</option>
+            </select>
+            
+
+            <div style="width:1px; height:1.2rem; background:var(--border-color); margin:0 0.2rem;"></div>
+            
+            <label style="display:flex; align-items:center; gap:0.4rem; font-size:0.85rem; cursor:pointer; padding:0.3rem 0.5rem; border-radius:20px; transition:var(--transition); font-weight:500;" class="hover-bg">
+                <input type="checkbox" name="groupby" value="artista" onchange="this.form.submit()" {% if group_by_artist %}checked{% endif %} class="form-checkbox" style="margin:0;">
+                Raggruppa Artista
+            </label>
+            
+            <div style="width:1px; height:1.2rem; background:var(--border-color); margin:0 0.2rem;"></div>
+            
+            <span class="material-symbols-outlined icon-sm" style="color:var(--text-secondary);">filter_alt</span>
+            <select name="f_anno" class="custom-select" onchange="this.form.submit()">
+                <option value="">Tutti gli anni</option>
+                {% for anno in anni_disponibili %}
+                    <option value="{{ anno }}" {% if f_anno == anno|stringformat:"i" %}selected{% endif %}>{{ anno }}</option>
+                {% endfor %}
+            </select>
+            
+            <select name="f_tipo" class="custom-select" onchange="this.form.submit()">
+                <option value="">Tutti i tipi</option>
+                <option value="album" {% if f_tipo == 'album' %}selected{% endif %}>Album</option>
+                <option value="concerto" {% if f_tipo == 'concerto' %}selected{% endif %}>Concerto</option>
+            </select>
+            
+            <select name="f_formato" class="custom-select" onchange="this.form.submit()">
+                <option value="">Tutti i formati</option>
+                <option value="none" {% if f_formato == 'none' %}selected{% endif %}>Digitale</option>
+                <option value="cd" {% if f_formato == 'cd' %}selected{% endif %}>CD</option>
+                <option value="vinile" {% if f_formato == 'vinile' %}selected{% endif %}>Vinile</option>
+                <option value="dvd" {% if f_formato == 'dvd' %}selected{% endif %}>DVD</option>
+                <option value="bluray" {% if f_formato == 'bluray' %}selected{% endif %}>Blu-Ray</option>
+            </select>
+            
+            {% if f_anno or f_tipo or f_formato %}
+            <a href="?sort={{ current_sort }}{% if group_by_artist %}&groupby=artista{% endif %}" title="Rimuovi filtri" style="display:flex; align-items:center; color:var(--danger); text-decoration:none;">
+                <span class="material-symbols-outlined icon-sm">close</span>
+            </a>
+            {% endif %}
+        </form>
+
+        <!-- View Controls -->
+        <div class="view-controls" style="display:flex; gap:0.3rem; background:var(--bg-secondary); padding:0.25rem; border-radius:30px; box-shadow:0 1px 3px rgba(0,0,0,0.1);">
+            <button type="button" id="btn-grid" title="Vista Griglia" style="background:transparent; border:none; border-radius:50%; width:32px; height:32px; display:flex; align-items:center; justify-content:center; cursor:pointer; color:var(--text-secondary); transition:var(--transition);" class="active-view">
+                <span class="material-symbols-outlined icon-sm">grid_view</span>
+            </button>
+            <button type="button" id="btn-list" title="Vista Lista" style="background:transparent; border:none; border-radius:50%; width:32px; height:32px; display:flex; align-items:center; justify-content:center; cursor:pointer; color:var(--text-secondary); transition:var(--transition);">
+                <span class="material-symbols-outlined icon-sm">view_list</span>
+            </button>
+            <div id="view-separator" style="width:1px; height:1.2rem; background:var(--border-color); margin:auto 0.3rem;"></div>
+            <button type="button" id="btn-size" title="Dimensione Tile" style="background:transparent; border:none; border-radius:50%; width:32px; height:32px; display:flex; align-items:center; justify-content:center; cursor:pointer; color:var(--text-secondary); transition:var(--transition);">
+                <span class="material-symbols-outlined icon-sm">aspect_ratio</span>
+            </button>
+        </div>
+
+        <!-- Per Page Selector -->
+        <div style="display:flex; align-items:center; background:var(--bg-secondary); padding:0 0 0 0.5rem; border-radius:30px; box-shadow:0 1px 3px rgba(0,0,0,0.1); height:40px; box-sizing:border-box;">
+            <span class="material-symbols-outlined icon-sm" style="color:var(--text-secondary); margin-right:0.2rem;">format_list_numbered</span>
+            <select id="per-page-select" class="custom-select" title="Elementi per pagina">
+                <option value="10" {% if per_page == "10" %}selected{% endif %}>10</option>
+                <option value="25" {% if per_page == "25" or not per_page %}selected{% endif %}>25</option>
+                <option value="50" {% if per_page == "50" %}selected{% endif %}>50</option>
+                <option value="100" {% if per_page == "100" %}selected{% endif %}>100</option>
+            </select>
+        </div>
+
+        <a href="{% url 'library:album_create' %}" class="btn btn-primary" style="border-radius:30px;">
+            <span class="material-symbols-outlined">add</span> Nuovo Album
+        </a>
+    </div>
+</div>
+
+<style>
+    .hover-bg:hover { background: var(--bg-primary); }
+    .active-view { background: var(--bg-primary) !important; color: var(--accent-primary) !important; }
+    
+    /* Dynamic Grid */
+    .grid {
+        display: grid;
+        gap: 1.5rem;
+        transition: grid-template-columns 0.3s ease;
+    }
+    .grid[data-size="small"] { grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); }
+    .grid[data-size="medium"] { grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); }
+    .grid[data-size="large"] { grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); }
+    
+    /* Image Sizing Overrides */
+    .card-img-container {
+        margin: -1.5rem -1.5rem 1rem -1.5rem;
+        overflow: hidden;
+        border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+        height: 200px; /* Default height */
+        transition: height 0.3s ease;
+    }
+    .grid[data-size="small"] .card-img-container { height: 140px; }
+    .grid[data-size="large"] .card-img-container { height: 280px; }
+    .card-img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        display: block;
+        transition: transform 0.4s ease;
+    }
+    .card:hover .card-img { transform: scale(1.05); }
+
+    /* List View Overrides for Card */
+    .view-mode-list .grid {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+    }
+    .view-mode-list .card {
+        display: flex;
+        align-items: center;
+        gap: 1.5rem;
+        padding: 1rem;
+        text-align: left;
+    }
+    .view-mode-list .card .card-img-container {
+        margin: 0;
+        width: 80px;
+        height: 80px;
+        flex-shrink: 0;
+        border-radius: var(--radius-sm);
+    }
+    .view-mode-list .card h3 {
+        margin-bottom: 0.2rem;
+        font-size: 1.1rem;
+    }
+    .view-mode-list .card p {
+        margin-bottom: 0 !important;
+    }
+    .view-mode-list .card .card-text-content {
+        flex-direction: row !important;
+        align-items: center !important;
+        gap: 1.5rem;
+    }
+    .view-mode-list .card .card-stars-container {
+        margin-top: 0 !important;
+    }
+    .view-mode-list .card .badge-container {
+        margin-left: auto;
+        margin-top: 0 !important;
+    }
+    
+    /* Gestione dimensioni in List Mode */
+    .view-mode-list .grid[data-size="small"] .card {
+        padding: 0.5rem 1rem;
+        gap: 1rem;
+    }
+    .view-mode-list .grid[data-size="small"] .card .card-img-container {
+        display: none !important;
+    }
+    .view-mode-list .grid[data-size="small"] .card h3 {
+        font-size: 1rem;
+    }
+    .view-mode-list .grid[data-size="large"] .card {
+        padding: 1.5rem;
+    }
+    .view-mode-list .grid[data-size="large"] .card .card-img-container {
+        width: 120px;
+        height: 120px;
+    }
+    .view-mode-list .grid[data-size="large"] .card h3 {
+        font-size: 1.3rem;
+    }
+</style>
+
+<div id="main-container">
+{% if albums %}
+    {% if group_by_artist %}
+        {% regroup albums by artista as grouped_albums %}
+        {% for artist_group in grouped_albums %}
+        <div style="margin-bottom:3rem;">
+            <h2 style="font-size:1.4rem; font-weight:800; margin-bottom:1rem; padding-bottom:0.5rem; border-bottom:1px solid var(--border-color); display:flex; align-items:center; gap:0.5rem;">
+                <span class="material-symbols-outlined" style="color:var(--accent-primary);">person</span>
+                <a href="{% url 'library:artista_detail' artist_group.grouper.pk %}" style="color:inherit;">{{ artist_group.grouper.nome }}</a>
+                <span style="font-size:0.85rem; color:var(--text-secondary); font-weight:400; margin-left:auto;">{{ artist_group.list|length }} album</span>
+            </h2>
+            <div class="grid">
+                {% for album in artist_group.list %}
+                    {% include "library/_album_card.html" %}
+                {% endfor %}
+            </div>
+        </div>
+        {% endfor %}
+    {% else %}
+        <div class="grid">
+            {% for album in albums %}
+                {% include "library/_album_card.html" %}
+            {% endfor %}
+        </div>
+    {% endif %}
+
+
+{% if is_paginated %}
+<div class="pagination">
+    <span class="step-links" style="display:flex; align-items:center; gap:0.5rem; justify-content:center;">
+        {% if page_obj.has_previous %}
+            <a href="?page=1{% if request.GET.sort %}&sort={{ request.GET.sort }}{% endif %}{% if request.GET.groupby %}&groupby={{ request.GET.groupby }}{% endif %}{% if request.GET.per_page %}&per_page={{ request.GET.per_page }}{% endif %}" title="Prima Pagina" style="display:inline-flex; align-items:center; justify-content:center; padding:0; width:34px; height:34px;"><span class="material-symbols-outlined" style="font-size:1.2rem; margin:0;">first_page</span></a>
+            <a href="?page={{ page_obj.previous_page_number }}{% if request.GET.sort %}&sort={{ request.GET.sort }}{% endif %}{% if request.GET.groupby %}&groupby={{ request.GET.groupby }}{% endif %}{% if request.GET.per_page %}&per_page={{ request.GET.per_page }}{% endif %}" title="Precedente" style="display:inline-flex; align-items:center; justify-content:center; padding:0; width:34px; height:34px;"><span class="material-symbols-outlined" style="font-size:1.2rem; margin:0;">chevron_left</span></a>
+        {% endif %}
+
+        <span class="current">
+            Pagina {{ page_obj.number }} di {{ page_obj.paginator.num_pages }}
+        </span>
+
+        {% if page_obj.has_next %}
+            <a href="?page={{ page_obj.next_page_number }}{% if request.GET.sort %}&sort={{ request.GET.sort }}{% endif %}{% if request.GET.groupby %}&groupby={{ request.GET.groupby }}{% endif %}{% if request.GET.per_page %}&per_page={{ request.GET.per_page }}{% endif %}" title="Successiva" style="display:inline-flex; align-items:center; justify-content:center; padding:0; width:34px; height:34px;"><span class="material-symbols-outlined" style="font-size:1.2rem; margin:0;">chevron_right</span></a>
+            <a href="?page={{ page_obj.paginator.num_pages }}{% if request.GET.sort %}&sort={{ request.GET.sort }}{% endif %}{% if request.GET.groupby %}&groupby={{ request.GET.groupby }}{% endif %}{% if request.GET.per_page %}&per_page={{ request.GET.per_page }}{% endif %}" title="Ultima Pagina" style="display:inline-flex; align-items:center; justify-content:center; padding:0; width:34px; height:34px;"><span class="material-symbols-outlined" style="font-size:1.2rem; margin:0;">last_page</span></a>
+        {% endif %}
+    </span>
+</div>
+{% endif %}
+</div>
+{% else %}
+<div class="empty-state">
+    <span class="material-symbols-outlined">library_music</span>
+    <h3>Nessun album trovato</h3>
+    <p>Inizia aggiungendo il tuo primo album alla collezione.</p>
+    <a href="{% url 'library:album_create' %}" class="btn btn-primary" style="margin-top:1rem;">
+        <span class="material-symbols-outlined">add</span> Aggiungi Album
+    </a>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const mainContainer = document.getElementById('main-container');
+    const btnGrid = document.getElementById('btn-grid');
+    const btnList = document.getElementById('btn-list');
+    const btnSize = document.getElementById('btn-size');
+    const grids = document.querySelectorAll('.grid');
+    if(!mainContainer) return;
+    
+    // View Mode (Grid/List)
+    const currentMode = localStorage.getItem('albumViewMode') || 'grid';
+    
+    function setViewMode(mode) {
+        if (mode === 'list') {
+            mainContainer.classList.add('view-mode-list');
+            if(btnList) btnList.classList.add('active-view');
+            if(btnGrid) btnGrid.classList.remove('active-view');
+            if(btnSize) btnSize.style.display = 'flex'; // Mantieni visibile in list mode
+            const sep = document.getElementById('view-separator');
+            if(sep) sep.style.display = 'block';
+        } else {
+            mainContainer.classList.remove('view-mode-list');
+            if(btnGrid) btnGrid.classList.add('active-view');
+            if(btnList) btnList.classList.remove('active-view');
+            if(btnSize) btnSize.style.display = 'flex';
+            const sep = document.getElementById('view-separator');
+            if(sep) sep.style.display = 'block';
+        }
+        localStorage.setItem('albumViewMode', mode);
+    }
+    
+    if(btnGrid) btnGrid.addEventListener('click', () => setViewMode('grid'));
+    if(btnList) btnList.addEventListener('click', () => setViewMode('list'));
+    
+    // Tile Size (Grid)
+    const sizes = ['small', 'medium', 'large'];
+    let currentSizeIndex = sizes.indexOf(localStorage.getItem('albumGridSize') || 'medium');
+    if (currentSizeIndex === -1) currentSizeIndex = 1;
+    
+    function setGridSize(size) {
+        grids.forEach(g => g.setAttribute('data-size', size));
+        localStorage.setItem('albumGridSize', size);
+    }
+    
+    if(btnSize) {
+        btnSize.addEventListener('click', () => {
+            currentSizeIndex = (currentSizeIndex + 1) % sizes.length;
+            setGridSize(sizes[currentSizeIndex]);
+        });
+    }
+    
+    // Initialize
+    setViewMode(currentMode);
+    setGridSize(sizes[currentSizeIndex]);
+});
+</script>
+
+<script>
+// Wire per_page selector — runs after initCustomSelect
+document.addEventListener('DOMContentLoaded', function () {
+    const sel = document.getElementById('per-page-select');
+    if (sel) {
+        sel.addEventListener('change', function () {
+            const url = new URL(window.location.href);
+            url.searchParams.set('per_page', this.value);
+            url.searchParams.set('page', '1'); // Reset to first page
+            window.location.href = url.toString();
+        });
+    }
+});
+</script>
+{% endblock %}

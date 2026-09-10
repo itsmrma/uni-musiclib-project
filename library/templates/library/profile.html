@@ -1,0 +1,60 @@
+{% extends "library/base.html" %}
+
+{% block content %}
+<div style="max-width: 600px; margin: 2rem auto; background: var(--bg-secondary); padding: 2rem; border-radius: 12px; border: 1px solid var(--border-color);">
+    <h2 style="margin-bottom: 2rem; display: flex; align-items: center; gap: 0.5rem;">
+        <span class="material-symbols-outlined">manage_accounts</span>
+        {{ page_title }}
+    </h2>
+    
+    <form method="post" enctype="multipart/form-data" class="form-container">
+        {% csrf_token %}
+        
+        <div class="form-group" style="margin-bottom: 2rem;">
+            <label class="form-label" for="id_email">{{ form.email.label }}</label>
+            {{ form.email }}
+            {% if form.email.help_text %}
+            <p style="font-size: 0.8rem; color: var(--text-secondary); margin-top: 0.25rem;">{{ form.email.help_text }}</p>
+            {% endif %}
+            {% if form.email.errors %}
+                <ul style="color: var(--danger); font-size: 0.85rem; padding-left: 1rem; margin-top: 0.25rem;">
+                    {% for error in form.email.errors %}
+                        <li>{{ error }}</li>
+                    {% endfor %}
+                </ul>
+            {% endif %}
+        </div>
+        
+        <div style="display: flex; gap: 2rem; align-items: flex-start; margin-bottom: 2rem;">
+            {% if form.instance.get_avatar_url %}
+            <div style="flex-shrink: 0;">
+                <img src="{{ form.instance.get_avatar_url }}" alt="Avatar" style="width: 100px; height: 100px; border-radius: 50%; object-fit: cover; border: 2px solid var(--accent-color);">
+            </div>
+            {% else %}
+            <div style="flex-shrink: 0; width: 100px; height: 100px; border-radius: 50%; background: var(--bg-primary); border: 2px solid var(--border-color); display: flex; align-items: center; justify-content: center;">
+                <span class="material-symbols-outlined" style="font-size: 3rem; color: var(--text-secondary);">person</span>
+            </div>
+            {% endif %}
+            
+            <div style="flex-grow: 1;">
+                <div class="form-group">
+                    <label class="form-label" for="id_avatar">Carica un'immagine</label>
+                    {{ form.avatar }}
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="id_avatar_url_input">{{ form.avatar_url_input.label }}</label>
+                    {{ form.avatar_url_input }}
+                </div>
+            </div>
+        </div>
+
+        <div style="display: flex; gap: 1rem; justify-content: flex-end;">
+            <a href="{% url 'library:album_list' %}" class="btn btn-secondary">Annulla</a>
+            <button type="submit" class="btn btn-primary">
+                Salva Profilo
+                <span class="material-symbols-outlined">save</span>
+            </button>
+        </div>
+    </form>
+</div>
+{% endblock %}

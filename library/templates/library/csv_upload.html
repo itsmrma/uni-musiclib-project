@@ -1,0 +1,91 @@
+{% extends "library/base.html" %}
+
+{% block title %}Importa CSV — Music Library{% endblock %}
+
+{% block content %}
+<div class="page-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+    <div>
+        <h1>
+            <span class="material-symbols-outlined" style="font-size:1.6rem; vertical-align:baseline;">upload_file</span>
+            Importa/Esporta CSV
+        </h1>
+        <p>Gestisci la tua libreria caricando o esportando file CSV.</p>
+    </div>
+    <div>
+        <a href="{% url 'library:csv_export' %}" class="btn btn-secondary">
+            <span class="material-symbols-outlined">download</span> Esporta Libreria
+        </a>
+    </div>
+</div>
+
+<div style="display:grid; grid-template-columns:1fr 1fr; gap:2rem; align-items:start;">
+    <!-- Upload Form -->
+    <div class="card-static">
+        <h3 style="font-size:1.05rem; font-weight:700; margin-bottom:1rem; display:flex; align-items:center; gap:0.4rem;">
+            <span class="material-symbols-outlined icon-sm">cloud_upload</span> Upload File
+        </h3>
+        <form method="post" enctype="multipart/form-data">
+            {% csrf_token %}
+
+            {% for field in form %}
+            <div class="form-group">
+                <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                {{ field }}
+                {% if field.help_text %}
+                <p class="form-help">{{ field.help_text }}</p>
+                {% endif %}
+                {% if field.errors %}
+                <ul class="errorlist">
+                    {% for error in field.errors %}
+                    <li>{{ error }}</li>
+                    {% endfor %}
+                </ul>
+                {% endif %}
+            </div>
+            {% endfor %}
+
+            <button type="submit" class="btn btn-primary" style="margin-top:0.5rem;">
+                <span class="material-symbols-outlined">upload</span> Importa
+            </button>
+        </form>
+    </div>
+
+    <!-- Formato CSV -->
+    <div class="card-static">
+        <h3 style="font-size:1.05rem; font-weight:700; margin-bottom:1rem; display:flex; align-items:center; gap:0.4rem;">
+            <span class="material-symbols-outlined icon-sm">description</span> Formato CSV
+        </h3>
+        <p style="font-size:0.85rem; color:var(--text-secondary); margin-bottom:1rem;">
+            Il file CSV deve avere un header con i seguenti campi:
+        </p>
+
+        <div class="table-container" style="font-size:0.8rem;">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Campo</th>
+                        <th>Obbligatorio</th>
+                        <th>Tipo</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr><td><code>titolo</code></td><td><span class="material-symbols-outlined icon-sm" style="color:var(--success);">check_circle</span></td><td>Testo</td></tr>
+                    <tr><td><code>artista</code></td><td><span class="material-symbols-outlined icon-sm" style="color:var(--success);">check_circle</span></td><td>Testo</td></tr>
+                    <tr><td><code>anno_uscita</code></td><td><span class="material-symbols-outlined icon-sm" style="color:var(--success);">check_circle</span></td><td>Numero</td></tr>
+                    <tr><td><code>tipo_release</code></td><td><span class="material-symbols-outlined icon-sm" style="color:var(--text-muted);">remove</span></td><td>album / concerto</td></tr>
+                    <tr><td><code>formato_fisico</code></td><td><span class="material-symbols-outlined icon-sm" style="color:var(--text-muted);">remove</span></td><td>cd / vinile / dvd / bluray</td></tr>
+                    <tr><td><code>canzoni</code></td><td><span class="material-symbols-outlined icon-sm" style="color:var(--text-muted);">remove</span></td><td>Testo (separate da |)</td></tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div style="margin-top:1rem; padding:1rem; background:var(--bg-secondary); border-radius:var(--radius-sm); overflow-x:auto;">
+            <p style="font-size:0.75rem; color:var(--text-secondary); margin-bottom:0.5rem; text-transform:uppercase; font-weight:600; letter-spacing:0.05em;">Esempio</p>
+            <code style="font-size:0.8rem; color:var(--accent-secondary); white-space:pre; background:none; padding:0;">titolo,artista,anno_uscita,tipo_release,formato_fisico,canzoni
+OK Computer,Radiohead,1997,album,cd,Airbag|Paranoid Android|Subterranean Homesick Alien
+Random Access Memories,Daft Punk,2013,album,vinile,Give Life Back to Music|The Game of Love
+Pulse,Pink Floyd,1995,concerto,dvd,Shine On You Crazy Diamond|Learning to Fly</code>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,18 @@
+[project]
+name = "music-library"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.14"
+dependencies = [
+    "django>=6.1.1",
+    "pillow>=11.0.0",
+    "requests>=2.32.0",
+]
+
+[project.scripts]
+music-library = "music_library:main"
+
+[build-system]
+requires = ["uv_build>=0.12.10,<0.13.0"]
+build-backend = "uv_build"

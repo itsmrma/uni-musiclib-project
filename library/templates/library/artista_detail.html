@@ -1,0 +1,130 @@
+{% extends "library/base.html" %}
+
+{% block title %}{{ artista.nome }} — Music Library{% endblock %}
+
+{% block content %}
+<div style="margin-bottom:1.5rem; position:relative; z-index:2;">
+    <a href="{% url 'library:artista_list' %}" style="font-size:0.85rem; color:var(--text-secondary); display:inline-flex; align-items:center; gap:0.3rem;">
+        <span class="material-symbols-outlined icon-sm">arrow_back</span> Torna agli artisti
+    </a>
+</div>
+
+{% if artista.immagine_profilo %}
+<style>
+    body {
+        position: relative;
+    }
+    body::before {
+        content: "";
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-image: url('{{ artista.immagine_profilo.url }}');
+        background-size: cover;
+        background-position: center;
+        filter: blur(80px) opacity(0.4);
+        z-index: -1;
+        pointer-events: none;
+    }
+</style>
+{% endif %}
+
+<div class="card-static" style="padding:0; overflow:hidden; position:relative; z-index:2;">
+    <div style="display:flex; flex-wrap:wrap; gap:0;">
+        {% if artista.immagine_profilo %}
+        <div style="flex:0 0 300px; max-width:300px;">
+            <img src="{{ artista.immagine_profilo.url }}" alt="{{ artista.nome }}"
+                 style="width:100%; height:100%; min-height:300px; object-fit:cover; display:block;">
+        </div>
+        {% else %}
+        <div style="flex:0 0 300px; max-width:300px; min-height:300px; background:var(--accent-gradient); opacity:0.4; display:flex; align-items:center; justify-content:center;">
+            <span class="material-symbols-outlined" style="font-size:72px; opacity:0.5;">person</span>
+        </div>
+        {% endif %}
+
+        <div style="flex:1; min-width:280px; padding:2rem;">
+            <h1 style="font-size:2rem; font-weight:800; letter-spacing:-0.03em; margin-bottom:0.5rem;">{{ artista.nome }}</h1>
+
+            {% if artista.biografia %}
+            <div style="position:relative; margin-bottom:1.5rem;">
+                <p style="color:var(--text-secondary); line-height:1.7; display:-webkit-box; -webkit-line-clamp:6; -webkit-box-orient:vertical; overflow:hidden; margin:0;">{{ artista.biografia }}</p>
+                <button type="button" class="btn" style="background:transparent; color:var(--accent-primary); padding:0; font-size:0.9rem; margin-top:0.5rem; border:none; cursor:pointer; font-weight:600;" onclick="document.getElementById('bio-modal').style.display='flex'">Mostra di più</button>
+            </div>
+            
+            <!-- Modal Biografia -->
+            <div id="bio-modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.7); z-index:10000; align-items:center; justify-content:center; padding:1.5rem; backdrop-filter:blur(4px);" onclick="if(event.target === this) this.style.display='none'">
+                <div style="background:var(--bg-primary); max-width:580px; width:100%; max-height:65vh; border-radius:var(--radius-lg); display:flex; flex-direction:column; overflow:hidden; box-shadow:0 20px 60px rgba(0,0,0,0.6);">
+                    <div style="padding:1.25rem 1.5rem; border-bottom:1px solid var(--border-color); display:flex; justify-content:space-between; align-items:center; background:var(--bg-card); flex-shrink:0;">
+                        <h3 style="margin:0; font-size:1.1rem; display:flex; align-items:center; gap:0.5rem;">
+                            <span class="material-symbols-outlined icon-sm">history_edu</span> Biografia
+                        </h3>
+                        <button type="button" onclick="document.getElementById('bio-modal').style.display='none'" style="background:var(--bg-secondary); border:1px solid var(--border-color); color:var(--text-primary); cursor:pointer; width:30px; height:30px; border-radius:50%; display:flex; align-items:center; justify-content:center;"><span class="material-symbols-outlined icon-sm">close</span></button>
+                    </div>
+                    <div style="padding:1.5rem; overflow-y:auto; color:var(--text-secondary); line-height:1.8; font-size:0.95rem; white-space:pre-wrap;">{{ artista.biografia }}</div>
+                </div>
+            </div>
+            {% endif %}
+
+            <div style="margin-bottom: 1rem;">
+                {% include "library/_star_rating.html" with item_type="artista" item_id=artista.pk current_rating=user_voto interactive=True %}
+            </div>
+
+            <div style="display:flex; gap:0.75rem; flex-wrap:wrap;">
+                <a href="{% url 'library:artista_metadata' artista.pk %}" class="btn btn-primary" style="background:var(--accent-gradient); color:white; border:none;">
+                    <span class="material-symbols-outlined">info</span> Dettagli
+                </a>
+                <a href="{% url 'library:artista_update' artista.pk %}" class="btn btn-secondary">
+                    <span class="material-symbols-outlined">edit</span> Modifica
+                </a>
+                <a href="{% url 'library:artista_delete' artista.pk %}" class="btn btn-danger">
+                    <span class="material-symbols-outlined">delete</span> Elimina
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Album dell'artista -->
+<div style="margin-top:2rem;">
+    <h2 style="font-size:1.3rem; font-weight:700; margin-bottom:1rem; display:flex; align-items:center; gap:0.5rem;">
+        <span class="material-symbols-outlined">album</span>
+        Discografia
+        <span style="font-size:0.85rem; color:var(--text-secondary); font-weight:400;">({{ albums.count }})</span>
+    </h2>
+
+    {% if albums %}
+    <div class="grid">
+        {% for album in albums %}
+        <a href="{% url 'library:album_detail' album.pk %}" class="card" style="text-decoration:none; color:inherit;">
+            {% if album.copertina %}
+            <div style="margin:-1.5rem -1.5rem 1rem -1.5rem; overflow:hidden; border-radius:var(--radius-lg) var(--radius-lg) 0 0;">
+                <img src="{{ album.copertina.url }}" alt="{{ album.titolo }}"
+                     style="width:100%; height:180px; object-fit:cover; display:block;">
+            </div>
+            {% else %}
+            <div style="margin:-1.5rem -1.5rem 1rem -1.5rem; height:180px; background:var(--accent-gradient); opacity:0.3; border-radius:var(--radius-lg) var(--radius-lg) 0 0; display:flex; align-items:center; justify-content:center;">
+                <span class="material-symbols-outlined" style="font-size:40px; opacity:0.5;">music_note</span>
+            </div>
+            {% endif %}
+            <h3 style="font-size:1rem; font-weight:700; margin-bottom:0.3rem;">{{ album.titolo }}</h3>
+            <div style="display:flex; align-items:center; gap:0.5rem; flex-wrap:wrap;">
+                <span class="badge badge-accent">{{ album.anno_uscita }}</span>
+                {% if album.formato_fisico %}
+                <span class="badge badge-green">{{ album.formato_display }}</span>
+                {% endif %}
+            </div>
+        </a>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="card-static" style="text-align:center; padding:2rem; color:var(--text-secondary);">
+        <p>Nessun album registrato per questo artista.</p>
+        <a href="{% url 'library:album_create' %}" class="btn btn-primary" style="margin-top:1rem;">
+            <span class="material-symbols-outlined">add</span> Aggiungi Album
+        </a>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

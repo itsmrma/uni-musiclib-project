@@ -1,0 +1,270 @@
+{% extends "library/base.html" %}
+
+{% block title %}Cerca su TheAudioDB — Music Library{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1>
+        <span class="material-symbols-outlined" style="font-size:1.6rem; vertical-align:baseline;">search</span>
+        Cerca Artista su TheAudioDB
+    </h1>
+    <p>Inserisci il nome di un artista per cercare immagine del profilo e biografia automaticamente.</p>
+</div>
+
+<!-- Search Form -->
+<div class="card-static" style="max-width:640px; margin-bottom:2rem;">
+    <form id="adb-search-form" method="get">
+        <label for="id_nome" style="display:block; font-size:0.85rem; font-weight:600; color:var(--text-secondary); margin-bottom:0.4rem; text-transform:uppercase; letter-spacing:0.05em;">Nome Artista</label>
+        <div style="display:flex; gap:0.75rem; align-items:stretch;">
+            <div style="flex:1;">
+                {{ form.nome }}
+            </div>
+            <button type="submit" class="btn btn-primary" style="white-space:nowrap; margin:0; display:flex; align-items:center;">
+                <span class="material-symbols-outlined">search</span> Cerca
+            </button>
+        </div>
+    </form>
+</div>
+
+<!-- Loading Indicator -->
+<div id="loading-indicator" style="display:none; text-align:center; padding:3rem 1rem;">
+    <style>
+        @keyframes spin { 100% { transform: rotate(360deg); } }
+    </style>
+    <span class="material-symbols-outlined" style="animation: spin 1s linear infinite; font-size:2.5rem; color:var(--accent-primary);">sync</span>
+    <p style="color:var(--text-secondary); margin-top:1rem; font-weight:500;">Ricerca in corso su TheAudioDB...<br><span style="font-size:0.85rem; font-weight:normal;">Potrebbe richiedere qualche secondo.</span></p>
+</div>
+
+<!-- Error Message -->
+<div id="error-message" style="display:none; text-align:center; padding:2rem 1rem; color:var(--danger);">
+</div>
+
+<!-- Results Container -->
+<div id="results-container">
+    {% if results %}
+    <h2 style="font-size:1.2rem; font-weight:700; margin-bottom:1rem; display:flex; align-items:center; gap:0.5rem;">
+        <span class="material-symbols-outlined">playlist_add_check</span>
+        Risultati
+        <span style="font-size:0.85rem; color:var(--text-secondary); font-weight:400;">({{ results|length }})</span>
+    </h2>
+
+    <div class="table-container">
+        <table>
+            <thead>
+                <tr>
+                    <th style="width:60px;">Foto</th>
+                    <th>Nome</th>
+                    <th>Genere</th>
+                    <th>Paese</th>
+                    <th style="text-align:right;">Azione</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for r in results %}
+                <tr>
+                    <td>
+                        {% if r.immagine %}
+                        <img src="{{ r.immagine }}/preview" alt="{{ r.nome }}" style="width:50px; height:50px; object-fit:cover; border-radius:50%;">
+                        {% else %}
+                        <div style="width:50px; height:50px; background:var(--bg-secondary); border-radius:50%; display:flex; align-items:center; justify-content:center; color:var(--text-secondary);">
+                            <span class="material-symbols-outlined">person</span>
+                        </div>
+                        {% endif %}
+                    </td>
+                    <td style="font-weight:600;">{{ r.nome }}</td>
+                    <td><span class="badge badge-accent">{{ r.genere|default:"N/D" }}</span></td>
+                    <td>{{ r.nazione|default:"N/D" }}</td>
+                    <td style="text-align:right; white-space:nowrap;">
+                        <button type="button" class="btn btn-secondary btn-sm" onclick="toggleBio('{{ r.id }}')" id="btn-{{ r.id }}">
+                            <span class="material-symbols-outlined">info</span> Bio
+                        </button>
+                        <button type="button" class="btn btn-primary btn-sm" onclick="importArtist('{{ r.id }}', this)">
+                            <span class="material-symbols-outlined">download</span> Importa
+                        </button>
+                    </td>
+                </tr>
+                <tr id="bio-{{ r.id }}" style="display:none; background:var(--bg-secondary);">
+                    <td colspan="5" style="padding:1rem;">
+                        <div id="content-{{ r.id }}" style="font-size:0.9rem; line-height:1.5; color:var(--text-secondary); white-space:pre-wrap;">
+                            {{ r.biografia|default:"Nessuna biografia disponibile." }}
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    {% elif form.is_bound %}
+    <div class="empty-state">
+        <span class="material-symbols-outlined">music_off</span>
+        <h3>Nessun risultato</h3>
+        <p>Prova con un nome diverso o più specifico.</p>
+    </div>
+    {% endif %}
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.getElementById('adb-search-form');
+    const loading = document.getElementById('loading-indicator');
+    const resultsContainer = document.getElementById('results-container');
+    const errorMsg = document.getElementById('error-message');
+    const nomeInput = document.getElementById('id_nome');
+
+    form.addEventListener('submit', async function(e) {
+        e.preventDefault();
+        
+        const nome = nomeInput.value.trim();
+        if (!nome) return;
+
+        // Mostra loading, nascondi risultati ed errori
+        loading.style.display = 'block';
+        resultsContainer.style.display = 'none';
+        errorMsg.style.display = 'none';
+
+        try {
+            const url = `?ajax=1&nome=${encodeURIComponent(nome)}`;
+            const response = await fetch(url);
+            const data = await response.json();
+            
+            loading.style.display = 'none';
+            
+            if (response.ok && data.results) {
+                renderResults(data.results);
+                resultsContainer.style.display = 'block';
+            } else {
+                errorMsg.innerHTML = `<span class="material-symbols-outlined" style="font-size:2rem; vertical-align:middle; margin-bottom:0.5rem;">error</span><br>${data.error || 'Errore durante la ricerca'}`;
+                errorMsg.style.display = 'block';
+            }
+        } catch (err) {
+            loading.style.display = 'none';
+            errorMsg.innerHTML = `<span class="material-symbols-outlined" style="font-size:2rem; vertical-align:middle; margin-bottom:0.5rem;">wifi_off</span><br>Errore di rete. Verifica la tua connessione.`;
+            errorMsg.style.display = 'block';
+        }
+    });
+
+    function renderResults(results) {
+        if (results.length === 0) {
+            resultsContainer.innerHTML = `
+                <div class="empty-state">
+                    <span class="material-symbols-outlined">person_off</span>
+                    <h3>Nessun risultato</h3>
+                    <p>Prova con un nome diverso o più specifico.</p>
+                </div>
+            `;
+            return;
+        }
+
+        let html = `
+            <h2 style="font-size:1.2rem; font-weight:700; margin-bottom:1rem; display:flex; align-items:center; gap:0.5rem;">
+                <span class="material-symbols-outlined">playlist_add_check</span>
+                Risultati
+                <span style="font-size:0.85rem; color:var(--text-secondary); font-weight:400;">(${results.length})</span>
+            </h2>
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th style="width:60px;">Foto</th>
+                            <th>Nome</th>
+                            <th>Genere</th>
+                            <th>Paese</th>
+                            <th style="text-align:right;">Azione</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+        `;
+
+        results.forEach(r => {
+            const imgSrc = r.immagine ? `<img src="${r.immagine}/preview" alt="${r.nome}" style="width:50px; height:50px; object-fit:cover; border-radius:50%;">` : 
+                `<div style="width:50px; height:50px; background:var(--bg-secondary); border-radius:50%; display:flex; align-items:center; justify-content:center; color:var(--text-secondary);"><span class="material-symbols-outlined">person</span></div>`;
+            const bioText = r.biografia || 'Nessuna biografia disponibile.';
+            const badgeGen = r.genere ? `<span class="badge badge-accent">${r.genere}</span>` : 'N/D';
+            const country = r.nazione || 'N/D';
+
+            html += `
+                <tr>
+                    <td>${imgSrc}</td>
+                    <td style="font-weight:600;">${r.nome}</td>
+                    <td>${badgeGen}</td>
+                    <td>${country}</td>
+                    <td style="text-align:right; white-space:nowrap;">
+                        <button type="button" class="btn btn-secondary btn-sm" onclick="toggleBio('${r.id}')" id="btn-${r.id}">
+                            <span class="material-symbols-outlined">info</span> Bio
+                        </button>
+                        <button type="button" class="btn btn-primary btn-sm" onclick="importArtist('${r.id}', this)">
+                            <span class="material-symbols-outlined">download</span> Importa
+                        </button>
+                    </td>
+                </tr>
+                <tr id="bio-${r.id}" style="display:none; background:var(--bg-secondary);">
+                    <td colspan="5" style="padding:1rem;">
+                        <div id="content-${r.id}" style="font-size:0.9rem; line-height:1.5; color:var(--text-secondary); white-space:pre-wrap;">${bioText}</div>
+                    </td>
+                </tr>
+            `;
+        });
+
+        html += `
+                    </tbody>
+                </table>
+            </div>
+        `;
+        resultsContainer.innerHTML = html;
+    }
+});
+
+function toggleBio(id) {
+    const row = document.getElementById(`bio-${id}`);
+    if (row.style.display === 'none') {
+        row.style.display = 'table-row';
+    } else {
+        row.style.display = 'none';
+    }
+}
+
+async function importArtist(id, btn) {
+    const originalHtml = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = '<span class="material-symbols-outlined" style="animation: spin 1s linear infinite;">sync</span> Importo...';
+    btn.style.opacity = '0.7';
+    
+    try {
+        const response = await fetch(`/theaudiodb/import/${id}/?ajax=1`);
+        const data = await response.json();
+        
+        if (response.ok && data.success) {
+            btn.innerHTML = '<span class="material-symbols-outlined">check_circle</span> Fatto!';
+            btn.style.background = 'var(--success)';
+            btn.style.color = 'white';
+            btn.style.opacity = '1';
+            setTimeout(() => { window.location.href = data.redirect_url; }, 800);
+        } else {
+            btn.innerHTML = '<span class="material-symbols-outlined">error</span> Errore';
+            btn.style.background = 'var(--danger)';
+            btn.style.color = 'white';
+            btn.style.opacity = '1';
+            setTimeout(() => {
+                btn.innerHTML = originalHtml;
+                btn.style.background = '';
+                btn.style.color = '';
+                btn.disabled = false;
+            }, 2000);
+        }
+    } catch (err) {
+        btn.innerHTML = '<span class="material-symbols-outlined">wifi_off</span> Rete';
+        btn.style.opacity = '1';
+        setTimeout(() => {
+            btn.innerHTML = originalHtml;
+            btn.style.background = '';
+            btn.style.color = '';
+            btn.disabled = false;
+        }, 2000);
+    }
+}
+</script>
+{% endblock %}

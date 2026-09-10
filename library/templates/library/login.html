@@ -1,0 +1,39 @@
+{% extends "library/base.html" %}
+
+{% block content %}
+<div style="max-width: 400px; margin: 4rem auto; background: var(--bg-secondary); padding: 2rem; border-radius: 12px; border: 1px solid var(--border-color);">
+    <h2 style="text-align: center; margin-bottom: 2rem;">Accedi</h2>
+    
+    <form method="post" class="form-container">
+        {% csrf_token %}
+        
+        <div class="form-group">
+            <label class="form-label" for="id_username">Nome utente o Email</label>
+            <input type="text" name="username" class="form-input" required id="id_username">
+        </div>
+        
+        <div class="form-group">
+            <label class="form-label" for="id_password">Password</label>
+            <input type="password" name="password" class="form-input" required id="id_password">
+        </div>
+
+        {% if form.errors %}
+            <div style="color: var(--danger-color); margin-bottom: 1rem; font-size: 0.9rem;">
+                Credenziali non valide. Riprova.
+            </div>
+        {% endif %}
+
+        <button type="submit" class="btn btn-primary" style="width: 100%; justify-content: center; margin-top: 1rem;">
+            Accedi
+            <span class="material-symbols-outlined">login</span>
+        </button>
+    </form>
+    
+    <div style="text-align: center; margin-top: 1.5rem; font-size: 0.9rem;">
+        <p style="color: var(--text-secondary);">
+            Non hai un account? 
+            <a href="{% url 'library:register' %}" style="color: var(--accent-primary); text-decoration: none; font-weight: 500;">Registrati ora</a>
+        </p>
+    </div>
+</div>
+{% endblock %}

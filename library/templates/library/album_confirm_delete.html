@@ -1,0 +1,38 @@
+{% extends "library/base.html" %}
+
+{% block title %}Elimina Album — Music Library{% endblock %}
+
+{% block content %}
+<div style="margin-bottom:1.5rem;">
+    <a href="{% url 'library:album_detail' album.pk %}" style="font-size:0.85rem; color:var(--text-secondary); display:inline-flex; align-items:center; gap:0.3rem;">
+        <span class="material-symbols-outlined icon-sm">arrow_back</span> Torna al dettaglio
+    </a>
+</div>
+
+<div class="page-header">
+    <h1>Elimina Album</h1>
+</div>
+
+<div class="card-static" style="max-width:540px;">
+    <div style="text-align:center; padding:1rem 0;">
+        <span class="material-symbols-outlined" style="font-size:56px; color:var(--warning); margin-bottom:1rem; display:block;">warning</span>
+        <h3 style="font-size:1.15rem; margin-bottom:0.5rem;">Sei sicuro di voler eliminare questo album?</h3>
+        <p style="color:var(--text-secondary); margin-bottom:0.3rem;">
+            <strong>{{ album.titolo }}</strong> di {{ album.artista.nome }}
+        </p>
+        <p style="font-size:0.85rem; color:var(--danger); margin-bottom:1.5rem;">
+            Questa azione è irreversibile. Verranno eliminate anche tutte le tracce, i voti e i post associati.
+        </p>
+
+        <form method="post">
+            {% csrf_token %}
+            <div style="display:flex; gap:0.75rem; justify-content:center;">
+                <button type="submit" class="btn btn-danger">
+                    <span class="material-symbols-outlined">delete_forever</span> Elimina definitivamente
+                </button>
+                <a href="{% url 'library:album_detail' album.pk %}" class="btn btn-secondary">Annulla</a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

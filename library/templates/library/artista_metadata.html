@@ -1,0 +1,57 @@
+{% extends "library/base.html" %}
+
+{% block title %}Dettagli di {{ artista.nome }} — Music Library{% endblock %}
+
+{% block content %}
+<div style="margin-bottom:1.5rem;">
+    <a href="{% url 'library:artista_detail' artista.pk %}" style="font-size:0.85rem; color:var(--text-secondary); display:inline-flex; align-items:center; gap:0.3rem;">
+        <span class="material-symbols-outlined icon-sm">arrow_back</span> Torna all'artista
+    </a>
+</div>
+
+<div class="card-static">
+    <div style="display:flex; gap:2rem; align-items:flex-start;">
+        {% if artista.immagine_profilo %}
+            <img src="{{ artista.immagine_profilo.url }}" alt="Foto di {{ artista.nome }}" style="width:150px; height:150px; object-fit:cover; border-radius:var(--radius-md); border:1px solid var(--border-color);">
+        {% else %}
+            <div style="width:150px; height:150px; background:var(--bg-secondary); border-radius:var(--radius-md); display:flex; align-items:center; justify-content:center; color:var(--text-secondary);">
+                <span class="material-symbols-outlined" style="font-size:4rem;">person</span>
+            </div>
+        {% endif %}
+        
+        <div style="flex:1;">
+            <h1 style="margin-bottom:0.5rem;">{{ artista.nome }}</h1>
+            <p style="color:var(--text-secondary); margin-bottom:1.5rem; display:flex; align-items:center; gap:0.3rem;">
+                Scheda Dettagliata
+            </p>
+            
+            <a href="{% url 'library:artista_update' artista.pk %}" class="btn" style="background:var(--bg-secondary); border:1px solid var(--border-color); color:var(--text-primary);">
+                <span class="material-symbols-outlined icon-sm">edit</span> Modifica Artista
+            </a>
+        </div>
+    </div>
+
+    <h2 style="font-size:1.2rem; margin-top:2.5rem; margin-bottom:1.5rem; border-bottom:1px solid var(--border-color); padding-bottom:0.5rem;">
+        <span class="material-symbols-outlined" style="vertical-align:bottom;">info</span> Metadati e Informazioni
+    </h2>
+    
+    {% if metadati %}
+    <div style="display:grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap:1rem;">
+        {% for meta in metadati %}
+        <div style="background:var(--bg-secondary); border:1px solid var(--border-color); border-radius:var(--radius-sm); padding:0.8rem;">
+            <p style="font-size:0.8rem; color:var(--text-secondary); text-transform:uppercase; font-weight:bold; margin-bottom:0.2rem;">{{ meta.chiave }}</p>
+            <p style="margin:0; font-size:1rem; color:var(--text-primary);">
+                {% if "http" in meta.valore %}
+                    <a href="{{ meta.valore }}" target="_blank" style="word-break:break-all;">{{ meta.valore }}</a>
+                {% else %}
+                    {{ meta.valore }}
+                {% endif %}
+            </p>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <p style="color:var(--text-secondary); font-style:italic;">Nessun dettaglio aggiuntivo presente per questo artista.</p>
+    {% endif %}
+</div>
+{% endblock %}

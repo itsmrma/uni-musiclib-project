@@ -1,0 +1,259 @@
+{% extends "library/base.html" %}
+
+{% block title %}{{ page_title|default:"Artista" }} — Music Library{% endblock %}
+
+{% block extra_css %}
+<style>
+/* Nasconde il brutto testo "Clear" di Django per ClearableFileInput */
+.form-group input[type="checkbox"][name$="-clear"] {
+    display: none;
+}
+.form-group label[for$="-clear_id"] {
+    display: none;
+}
+.form-group .clearable-file-input {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+.form-group .clearable-file-input a {
+    color: var(--accent-primary);
+    text-decoration: underline;
+    font-size: 0.85rem;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div style="margin-bottom:1.5rem;">
+    <a href="{% url 'library:artista_list' %}" style="font-size:0.85rem; color:var(--text-secondary); display:inline-flex; align-items:center; gap:0.3rem;">
+        <span class="material-symbols-outlined icon-sm">arrow_back</span> Torna agli artisti
+    </a>
+</div>
+
+<div class="page-header">
+    <h1>{{ page_title|default:"Artista" }}</h1>
+</div>
+
+<div class="card-static" style="max-width:640px;">
+    <form method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+
+        {% for field in form %}
+            {% if field.name == 'immagine_url' %}
+                <!-- Renderizzato sotto immagine_profilo -->
+            {% elif field.name == 'nome' %}
+                <div class="form-group" style="position:relative;">
+                    <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                    <div style="display:flex; gap:0.5rem; align-items:center;">
+                        {{ field }}
+                        <button type="button" id="btn-search-cover" class="btn" style="background:var(--bg-secondary); border:1px solid var(--border-color); color:var(--text-primary); padding:0.5rem; white-space:nowrap; border-radius:var(--radius-sm);" title="Cerca immagine su TheAudioDB">
+                            <span class="material-symbols-outlined icon-sm">image_search</span> Cerca Immagine
+                        </button>
+                    </div>
+                    <p id="search-status" style="font-size:0.8rem; color:var(--text-secondary); margin-top:0.3rem; display:none;">Ricerca in corso...</p>
+                    {% if field.errors %}
+                        <ul class="errorlist">
+                            {% for error in field.errors %}
+                            <li>{{ error }}</li>
+                            {% endfor %}
+                        </ul>
+                    {% endif %}
+                </div>
+            {% elif field.name == 'immagine_profilo' %}
+                <div class="form-group">
+                    <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                    <div class="clearable-file-input">
+                        {% if form.instance.immagine_profilo %}
+                            <div style="display:flex; align-items:center; gap:1rem; margin-bottom:0.5rem;">
+                                <img src="{{ form.instance.immagine_profilo.url }}" style="width:60px; height:60px; object-fit:cover; border-radius:50%; border:1px solid var(--border-color);">
+                                <label style="display:flex; align-items:center; gap:0.3rem; color:var(--danger); cursor:pointer; font-size:0.85rem; text-transform:none;">
+                                    <input type="checkbox" name="immagine_profilo-clear" id="immagine_profilo-clear_id" class="form-checkbox">
+                                    <span class="material-symbols-outlined icon-sm">delete</span> Rimuovi foto corrente
+                                </label>
+                            </div>
+                        {% endif %}
+                        <input type="file" name="immagine_profilo" class="form-input" accept="image/*" id="id_immagine_profilo">
+                    </div>
+                    
+                    {% if form.immagine_url %}
+                    <div style="margin-top:0.75rem; border-top:1px dashed var(--border-color); padding-top:0.75rem;">
+                        <label for="{{ form.immagine_url.id_for_label }}">{{ form.immagine_url.label }}</label>
+                        {{ form.immagine_url }}
+                        {% if form.immagine_url.errors %}
+                            <ul class="errorlist">
+                                {% for error in form.immagine_url.errors %}
+                                <li>{{ error }}</li>
+                                {% endfor %}
+                            </ul>
+                        {% endif %}
+                    </div>
+                    {% endif %}
+                    
+                    {% if field.help_text %}
+                    <p class="form-help">{{ field.help_text }}</p>
+                    {% endif %}
+                    {% if field.errors %}
+                    <ul class="errorlist">
+                        {% for error in field.errors %}
+                        <li>{{ error }}</li>
+                        {% endfor %}
+                    </ul>
+                    {% endif %}
+                </div>
+            {% else %}
+                <div class="form-group">
+                    <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                    {{ field }}
+                    {% if field.help_text %}
+                    <p class="form-help">{{ field.help_text }}</p>
+                    {% endif %}
+                    {% if field.errors %}
+                    <ul class="errorlist">
+                        {% for error in field.errors %}
+                        <li>{{ error }}</li>
+                        {% endfor %}
+                    </ul>
+                    {% endif %}
+                </div>
+            {% endif %}
+        {% endfor %}
+
+        <div style="display:flex; gap:0.75rem; margin-top:1.5rem;">
+            <button type="submit" class="btn btn-primary">
+                <span class="material-symbols-outlined">save</span> Salva
+            </button>
+            <a href="{% url 'library:artista_list' %}" class="btn btn-secondary">Annulla</a>
+        </div>
+    </form>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const urlInput = document.getElementById('{{ form.immagine_url.id_for_label }}');
+        
+        if (urlInput && urlInput.value) {
+            let previewImg = document.createElement('img');
+            previewImg.id = 'mb-preview-img';
+            previewImg.style.width = '100px';
+            previewImg.style.height = '100px';
+            previewImg.style.objectFit = 'cover';
+            previewImg.style.borderRadius = '50%';
+            previewImg.style.marginTop = '0.5rem';
+            previewImg.style.border = '1px solid var(--border-color)';
+            previewImg.src = urlInput.value;
+            urlInput.parentNode.appendChild(previewImg);
+        }
+
+        const btnSearch = document.getElementById('btn-search-cover');
+        const nomeInput = document.getElementById('{{ form.nome.id_for_label }}');
+        const statusEl = document.getElementById('search-status');
+
+        if (btnSearch && nomeInput && urlInput) {
+            btnSearch.addEventListener('click', async function() {
+                const query = nomeInput.value.trim();
+                if (!query) {
+                    alert('Inserisci prima il nome dell\'artista.');
+                    return;
+                }
+
+                btnSearch.disabled = true;
+                statusEl.style.display = 'block';
+                statusEl.textContent = 'Ricerca in corso su TheAudioDB...';
+                statusEl.style.color = 'var(--text-secondary)';
+
+                // Rimuovi vecchi risultati se ci sono
+                const oldResults = document.getElementById('cover-results');
+                if (oldResults) oldResults.remove();
+
+                try {
+                    const url = `{% url 'library:api_search_cover' %}?q=${encodeURIComponent(query)}&type=artista`;
+                    const res = await fetch(url);
+                    const data = await res.json();
+
+                    if (res.ok && data.urls && data.urls.length > 0) {
+                        statusEl.style.display = 'none';
+                        
+                        const resultsDiv = document.createElement('div');
+                        resultsDiv.id = 'cover-results';
+                        resultsDiv.style.marginTop = '1rem';
+                        resultsDiv.style.padding = '1rem';
+                        resultsDiv.style.background = 'var(--bg-secondary)';
+                        resultsDiv.style.borderRadius = 'var(--radius-md)';
+                        resultsDiv.style.border = '1px solid var(--border-color)';
+
+                        const title = document.createElement('p');
+                        title.textContent = 'Seleziona un\'immagine:';
+                        title.style.margin = '0 0 0.5rem 0';
+                        title.style.fontWeight = '600';
+                        title.style.fontSize = '0.9rem';
+                        resultsDiv.appendChild(title);
+
+                        const grid = document.createElement('div');
+                        grid.style.display = 'flex';
+                        grid.style.gap = '0.5rem';
+                        grid.style.overflowX = 'auto';
+                        grid.style.paddingBottom = '0.5rem';
+
+                        data.urls.forEach(imageUrl => {
+                            const imgContainer = document.createElement('div');
+                            imgContainer.style.cursor = 'pointer';
+                            imgContainer.style.flexShrink = '0';
+                            
+                            const img = document.createElement('img');
+                            img.src = imageUrl + '/preview';
+                            img.style.width = '80px';
+                            img.style.height = '80px';
+                            img.style.objectFit = 'cover';
+                            img.style.borderRadius = '50%';
+                            img.style.border = '2px solid transparent';
+                            img.style.transition = 'all 0.2s';
+                            
+                            img.onmouseover = () => img.style.borderColor = 'var(--accent-primary)';
+                            img.onmouseout = () => img.style.borderColor = 'transparent';
+                            
+                            img.onclick = () => {
+                                urlInput.value = imageUrl;
+                                let pImg = document.getElementById('mb-preview-img');
+                                if (!pImg) {
+                                    pImg = document.createElement('img');
+                                    pImg.id = 'mb-preview-img';
+                                    pImg.style.width = '100px';
+                                    pImg.style.height = '100px';
+                                    pImg.style.objectFit = 'cover';
+                                    pImg.style.borderRadius = '50%';
+                                    pImg.style.marginTop = '0.5rem';
+                                    pImg.style.border = '1px solid var(--border-color)';
+                                    urlInput.parentNode.appendChild(pImg);
+                                }
+                                pImg.src = imageUrl;
+                                resultsDiv.remove();
+                                statusEl.style.display = 'block';
+                                statusEl.textContent = 'Immagine selezionata.';
+                                statusEl.style.color = 'var(--success)';
+                                setTimeout(() => statusEl.style.display = 'none', 3000);
+                            };
+                            
+                            imgContainer.appendChild(img);
+                            grid.appendChild(imgContainer);
+                        });
+
+                        resultsDiv.appendChild(grid);
+                        urlInput.parentNode.appendChild(resultsDiv);
+                    } else {
+                        statusEl.textContent = 'Nessuna immagine trovata su TheAudioDB.';
+                        statusEl.style.color = 'var(--danger)';
+                    }
+                } catch (err) {
+                    statusEl.textContent = 'Errore durante la ricerca.';
+                    statusEl.style.color = 'var(--danger)';
+                } finally {
+                    btnSearch.disabled = false;
+                }
+            });
+        }
+    });
+</script>
+{% endblock %}

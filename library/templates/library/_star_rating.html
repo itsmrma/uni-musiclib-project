@@ -1,0 +1,170 @@
+{% comment %}
+Componente Rating a Stelle.
+Parametri richiesti:
+- item_type: 'album', 'artista', 'canzone'
+- item_id: ID dell'oggetto
+- current_rating: voto corrente (es. 3.5, oppure 0 se non votato)
+- interactive: True o False (se si può votare)
+{% endcomment %}
+
+<div class="star-rating {% if interactive %}interactive{% endif %}" 
+     data-type="{{ item_type }}" 
+     data-id="{{ item_id }}" 
+     data-rating="{{ current_rating|default:0|floatformat:1 }}">
+    
+    <div class="stars-container">
+        {% for i in '12345'|make_list %}
+        <div class="star-wrapper" data-index="{{ forloop.counter }}">
+            <span class="material-symbols-outlined star-icon">star_border</span>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<style>
+.star-rating {
+    display: inline-flex;
+    align-items: center;
+}
+.stars-container {
+    display: flex;
+    position: relative;
+}
+.star-wrapper {
+    position: relative;
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--accent-primary);
+}
+.star-icon {
+    font-size: 24px;
+    user-select: none;
+    transition: color 0.2s, transform 0.1s;
+    font-variation-settings: 'FILL' 0, 'wght' 300;
+}
+.star-icon.filled {
+    font-variation-settings: 'FILL' 1, 'wght' 300;
+}
+.star-rating.interactive .star-wrapper {
+    cursor: pointer;
+}
+.star-rating.interactive .star-icon:hover {
+    transform: scale(1.1);
+}
+/* Aggiusta dimensione se in contesto lista */
+.card .star-rating .star-icon {
+    font-size: 18px;
+}
+.card .star-rating .star-wrapper {
+    width: 18px;
+    height: 18px;
+}
+</style>
+
+<script>
+if (typeof window.initStarRatings === 'undefined') {
+    window.initStarRatings = function() {
+        document.querySelectorAll('.star-rating').forEach(el => {
+            if (el.dataset.initialized) return;
+            el.dataset.initialized = 'true';
+            
+            const isInteractive = el.classList.contains('interactive');
+            const wrappers = el.querySelectorAll('.star-wrapper');
+            let currentRating = parseFloat(el.dataset.rating.replace(',', '.')) || 0;
+            
+            function updateStars(rating) {
+                wrappers.forEach((wrapper, idx) => {
+                    const starIndex = idx + 1;
+                    const icon = wrapper.querySelector('.star-icon');
+                    if (rating >= starIndex) {
+                        icon.textContent = 'star';
+                        icon.classList.add('filled');
+                    } else if (rating >= starIndex - 0.5) {
+                        icon.textContent = 'star_half';
+                        icon.classList.add('filled');
+                    } else {
+                        icon.textContent = 'star';
+                        icon.classList.remove('filled');
+                    }
+                });
+            }
+            
+            // Set initial state
+            updateStars(currentRating);
+            
+            if (isInteractive) {
+                wrappers.forEach(wrapper => {
+                    wrapper.addEventListener('mousemove', (e) => {
+                        const rect = wrapper.getBoundingClientRect();
+                        const x = e.clientX - rect.left;
+                        const isHalf = x < rect.width / 2;
+                        const hoverIndex = parseInt(wrapper.dataset.index);
+                        const hoverRating = isHalf ? hoverIndex - 0.5 : hoverIndex;
+                        updateStars(hoverRating);
+                    });
+                    
+                    wrapper.addEventListener('click', (e) => {
+                        const rect = wrapper.getBoundingClientRect();
+                        const x = e.clientX - rect.left;
+                        const isHalf = x < rect.width / 2;
+                        const index = parseInt(wrapper.dataset.index);
+                        const newRating = isHalf ? index - 0.5 : index;
+                        
+                        const itemType = el.dataset.type;
+                        const itemId = el.dataset.id;
+                        
+                        // Chiama API (assicurati che il baseUrl del progetto sia gestito, qui usiamo percorso assoluto /api/rate/)
+                        fetch(`/api/rate/${itemType}/${itemId}/`, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-CSRFToken': getCookie('csrftoken')
+                            },
+                            body: JSON.stringify({ punteggio: newRating })
+                        })
+                        .then(res => res.json())
+                        .then(data => {
+                            if (data.success) {
+                                currentRating = data.punteggio;
+                                updateStars(currentRating);
+                                el.dataset.rating = currentRating;
+                            } else {
+                                console.error(data.error);
+                            }
+                        })
+                        .catch(err => console.error(err));
+                    });
+                });
+                
+                el.addEventListener('mouseleave', () => {
+                    updateStars(currentRating);
+                });
+            }
+        });
+    };
+    
+    // Funzione helper per csrf token
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+    
+    // Initialize on load
+    document.addEventListener('DOMContentLoaded', window.initStarRatings);
+} else {
+    window.initStarRatings();
+}
+</script>

@@ -1,0 +1,115 @@
+{% extends "library/base.html" %}
+
+{% block title %}Modifica Metadati - {{ canzone.titolo }} — Music Library{% endblock %}
+
+{% block content %}
+<div style="margin-bottom:1.5rem;">
+    <a href="{% url 'library:canzone_detail' canzone.pk %}" style="font-size:0.85rem; color:var(--text-secondary); display:inline-flex; align-items:center; gap:0.3rem;">
+        <span class="material-symbols-outlined icon-sm">arrow_back</span> Annulla e torna alla traccia
+    </a>
+</div>
+
+<div class="page-header">
+    <h1>Modifica Metadati</h1>
+    <p>Traccia: {{ canzone.titolo }} ({{ canzone.album.titolo }})</p>
+</div>
+
+<form method="post" class="card-static">
+    {% csrf_token %}
+    
+    <!-- Campi base della canzone (nascosti se vogliamo che l'utente modifichi solo i metadati, oppure li mostriamo) -->
+    <div style="display:none;">
+        {{ form.as_p }}
+    </div>
+
+    <h2 style="font-size:1.1rem; margin-bottom:1rem;">Dettagli personalizzati (Compositori, Produttori, Strumenti...)</h2>
+    <p style="font-size:0.85rem; color:var(--text-secondary); margin-bottom:1.5rem;">Aggiungi categorie personalizzate come "Compositore" e "Hans Zimmer".</p>
+    
+    {{ metadati.management_form }}
+    
+    <div id="metadati-formset">
+        {% for mform in metadati %}
+        <div class="form-group metadato-row" style="display:flex; gap:1rem; align-items:flex-end; padding-bottom:1rem; border-bottom:1px solid var(--border-color); margin-bottom:1rem;">
+            {% for hidden in mform.hidden_fields %}
+                {{ hidden }}
+            {% endfor %}
+            <div style="flex:1;">
+                <label style="font-size:0.8rem;">Categoria / Ruolo</label>
+                {{ mform.chiave }}
+                {% if mform.chiave.errors %}<div style="color:var(--danger); font-size:0.8rem;">{{ mform.chiave.errors }}</div>{% endif %}
+            </div>
+            <div style="flex:2;">
+                <label style="font-size:0.8rem;">Valore / Nome</label>
+                {{ mform.valore }}
+                {% if mform.valore.errors %}<div style="color:var(--danger); font-size:0.8rem;">{{ mform.valore.errors }}</div>{% endif %}
+            </div>
+            {% if metadati.can_delete %}
+            <div style="padding-bottom:0.5rem;">
+                <label style="display:flex; align-items:center; gap:0.3rem; color:var(--danger); font-size:0.85rem; cursor:pointer;">
+                    {{ mform.DELETE }} Elimina
+                </label>
+            </div>
+            {% endif %}
+        </div>
+        {% endfor %}
+    </div>
+
+    <div style="margin-bottom:2rem;">
+        <button type="button" id="add-metadato" class="btn" style="background:var(--bg-secondary); border:1px dashed var(--border-color); width:100%; display:flex; align-items:center; justify-content:center; gap:0.5rem; padding:1rem; color:var(--text-secondary);">
+            <span class="material-symbols-outlined">add_circle</span> Aggiungi Categoria Personalizzata
+        </button>
+    </div>
+
+    <div style="display:flex; gap:0.75rem;">
+        <button type="submit" class="btn btn-primary">Salva Modifiche</button>
+    </div>
+</form>
+
+<!-- Template vuoto per la riga aggiuntiva -->
+<div id="empty-form" style="display:none;">
+    <div class="form-group metadato-row" style="display:flex; gap:1rem; align-items:flex-end; padding-bottom:1rem; border-bottom:1px solid var(--border-color); margin-bottom:1rem;">
+        {% for hidden in metadati.empty_form.hidden_fields %}
+            {{ hidden }}
+        {% endfor %}
+        <div style="flex:1;">
+            <label style="font-size:0.8rem;">Categoria / Ruolo</label>
+            {{ metadati.empty_form.chiave }}
+        </div>
+        <div style="flex:2;">
+            <label style="font-size:0.8rem;">Valore / Nome</label>
+            {{ metadati.empty_form.valore }}
+        </div>
+        {% if metadati.can_delete %}
+        <div style="padding-bottom:0.5rem;">
+            <label style="display:flex; align-items:center; gap:0.3rem; color:var(--danger); font-size:0.85rem; cursor:pointer;">
+                {{ metadati.empty_form.DELETE }} Elimina
+            </label>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const addBtn = document.getElementById('add-metadato');
+    const formsetContainer = document.getElementById('metadati-formset');
+    const emptyForm = document.getElementById('empty-form').innerHTML;
+    const totalForms = document.getElementById('id_metadati-TOTAL_FORMS');
+    
+    addBtn.addEventListener('click', function() {
+        const formCount = parseInt(totalForms.value);
+        // Sostituisce il prefisso '__prefix__' usato da Django per i form vuoti
+        const newFormHtml = emptyForm.replace(/__prefix__/g, formCount);
+        
+        // Aggiunge la nuova riga
+        formsetContainer.insertAdjacentHTML('beforeend', newFormHtml);
+        
+        // Aggiorna il counter totale
+        totalForms.value = formCount + 1;
+    });
+});
+</script>
+{% endblock %}

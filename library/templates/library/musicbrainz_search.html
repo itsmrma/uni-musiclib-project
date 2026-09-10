@@ -1,0 +1,287 @@
+{% extends "library/base.html" %}
+
+{% block title %}Cerca su MusicBrainz — Music Library{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1>
+        <span class="material-symbols-outlined" style="font-size:1.6rem; vertical-align:baseline;">search</span>
+        Cerca su MusicBrainz
+    </h1>
+    <p>Inserisci il titolo di un album per cercare copertina e lista tracce automaticamente.</p>
+</div>
+
+<!-- Search Form -->
+<div class="card-static" style="max-width:640px; margin-bottom:2rem;">
+    <form id="mb-search-form" method="get">
+        <label for="id_titolo" style="display:block; font-size:0.85rem; font-weight:600; color:var(--text-secondary); margin-bottom:0.4rem; text-transform:uppercase; letter-spacing:0.05em;">Titolo Album</label>
+        <div style="display:flex; gap:0.75rem; align-items:stretch;">
+            <div style="flex:1;">
+                {{ form.titolo }}
+            </div>
+            <button type="submit" class="btn btn-primary" style="white-space:nowrap; margin:0; display:flex; align-items:center;">
+                <span class="material-symbols-outlined">search</span> Cerca
+            </button>
+        </div>
+    </form>
+</div>
+
+<!-- Loading Indicator -->
+<div id="loading-indicator" style="display:none; text-align:center; padding:3rem 1rem;">
+    <style>
+        @keyframes spin { 100% { transform: rotate(360deg); } }
+    </style>
+    <span class="material-symbols-outlined" style="animation: spin 1s linear infinite; font-size:2.5rem; color:var(--accent-primary);">sync</span>
+    <p style="color:var(--text-secondary); margin-top:1rem; font-weight:500;">Ricerca in corso su MusicBrainz...<br><span style="font-size:0.85rem; font-weight:normal;">Potrebbe richiedere qualche secondo.</span></p>
+</div>
+
+<!-- Error Message -->
+<div id="error-message" style="display:none; text-align:center; padding:2rem 1rem; color:var(--danger);">
+</div>
+
+<!-- Results Container -->
+<div id="results-container">
+    {% if results %}
+    <h2 style="font-size:1.2rem; font-weight:700; margin-bottom:1rem; display:flex; align-items:center; gap:0.5rem;">
+        <span class="material-symbols-outlined">playlist_add_check</span>
+        Risultati
+        <span style="font-size:0.85rem; color:var(--text-secondary); font-weight:400;">({{ results|length }})</span>
+    </h2>
+
+    <div class="table-container">
+        <table>
+            <thead>
+                <tr>
+                    <th>Titolo</th>
+                    <th>Artista</th>
+                    <th>Anno</th>
+                    <th>Paese</th>
+                    <th style="text-align:right;">Azione</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for r in results %}
+                <tr>
+                    <td style="font-weight:600;">{{ r.titolo }}</td>
+                    <td>{{ r.artista }}</td>
+                    <td><span class="badge badge-accent">{{ r.anno }}</span></td>
+                    <td>{{ r.country }}</td>
+                    <td style="text-align:right; white-space:nowrap;">
+                        <button type="button" class="btn btn-secondary btn-sm" onclick="toggleTracks('{{ r.mbid }}')" id="btn-{{ r.mbid }}">
+                            <span class="material-symbols-outlined">queue_music</span> Tracce
+                        </button>
+                        <button type="button" class="btn btn-primary btn-sm" onclick="importAlbum('{{ r.mbid }}', this)">
+                            <span class="material-symbols-outlined">download</span> Importa
+                        </button>
+                    </td>
+                </tr>
+                <tr id="tracks-{{ r.mbid }}" style="display:none; background:var(--bg-secondary);">
+                    <td colspan="5" style="padding:1rem;">
+                        <div id="content-{{ r.mbid }}" style="font-size:0.85rem;">
+                            <p style="color:var(--text-secondary);">Caricamento tracce...</p>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    {% elif form.is_bound %}
+    <div class="empty-state">
+        <span class="material-symbols-outlined">music_off</span>
+        <h3>Nessun risultato</h3>
+        <p>Prova con un titolo diverso o più specifico.</p>
+    </div>
+    {% endif %}
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.getElementById('mb-search-form');
+    const loading = document.getElementById('loading-indicator');
+    const resultsContainer = document.getElementById('results-container');
+    const errorMsg = document.getElementById('error-message');
+    const titoloInput = document.getElementById('id_titolo');
+
+    form.addEventListener('submit', async function(e) {
+        e.preventDefault();
+        
+        const titolo = titoloInput.value.trim();
+        if (!titolo) return;
+
+        // Mostra loading, nascondi risultati ed errori
+        loading.style.display = 'block';
+        resultsContainer.style.display = 'none';
+        errorMsg.style.display = 'none';
+
+        try {
+            const url = `?ajax=1&titolo=${encodeURIComponent(titolo)}`;
+            const response = await fetch(url);
+            const data = await response.json();
+            
+            loading.style.display = 'none';
+            
+            if (response.ok && data.results) {
+                renderResults(data.results);
+                resultsContainer.style.display = 'block';
+            } else {
+                errorMsg.innerHTML = `<span class="material-symbols-outlined" style="font-size:2rem; vertical-align:middle; margin-bottom:0.5rem;">error</span><br>${data.error || 'Errore durante la ricerca'}`;
+                errorMsg.style.display = 'block';
+            }
+        } catch (err) {
+            loading.style.display = 'none';
+            errorMsg.innerHTML = `<span class="material-symbols-outlined" style="font-size:2rem; vertical-align:middle; margin-bottom:0.5rem;">wifi_off</span><br>Errore di rete. Verifica la tua connessione.`;
+            errorMsg.style.display = 'block';
+        }
+    });
+
+    function renderResults(results) {
+        if (results.length === 0) {
+            resultsContainer.innerHTML = `
+                <div class="empty-state">
+                    <span class="material-symbols-outlined">music_off</span>
+                    <h3>Nessun risultato</h3>
+                    <p>Prova con un titolo diverso o più specifico.</p>
+                </div>
+            `;
+            return;
+        }
+
+        let html = `
+            <h2 style="font-size:1.2rem; font-weight:700; margin-bottom:1rem; display:flex; align-items:center; gap:0.5rem;">
+                <span class="material-symbols-outlined">playlist_add_check</span>
+                Risultati
+                <span style="font-size:0.85rem; color:var(--text-secondary); font-weight:400;">(${results.length})</span>
+            </h2>
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Titolo</th>
+                            <th>Artista</th>
+                            <th>Anno</th>
+                            <th>Paese</th>
+                            <th style="text-align:right;">Azione</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+        `;
+
+        results.forEach(r => {
+            html += `
+                <tr>
+                    <td style="font-weight:600;">${r.titolo}</td>
+                    <td>${r.artista}</td>
+                    <td><span class="badge badge-accent">${r.anno}</span></td>
+                    <td>${r.country}</td>
+                    <td style="text-align:right; white-space:nowrap;">
+                        <button type="button" class="btn btn-secondary btn-sm" onclick="toggleTracks('${r.mbid}')" id="btn-${r.mbid}">
+                            <span class="material-symbols-outlined">queue_music</span> Tracce
+                        </button>
+                        <button type="button" class="btn btn-primary btn-sm" onclick="importAlbum('${r.mbid}', this)">
+                            <span class="material-symbols-outlined">download</span> Importa
+                        </button>
+                    </td>
+                </tr>
+                <tr id="tracks-${r.mbid}" style="display:none; background:var(--bg-secondary);">
+                    <td colspan="5" style="padding:1rem;">
+                        <div id="content-${r.mbid}" style="font-size:0.85rem;">
+                            <p style="color:var(--text-secondary);">Caricamento tracce...</p>
+                        </div>
+                    </td>
+                </tr>
+            `;
+        });
+
+        html += `
+                    </tbody>
+                </table>
+            </div>
+        `;
+        resultsContainer.innerHTML = html;
+    }
+});
+
+async function toggleTracks(mbid) {
+    const row = document.getElementById(`tracks-${mbid}`);
+    const content = document.getElementById(`content-${mbid}`);
+    
+    if (row.style.display === 'none') {
+        row.style.display = 'table-row';
+        
+        if (!content.dataset.loaded) {
+            try {
+                const response = await fetch(`/musicbrainz/preview/${mbid}/`);
+                if (!response.ok) throw new Error('Errore di rete');
+                
+                const data = await response.json();
+                if (data.tracks && data.tracks.length > 0) {
+                    let html = '<div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(200px, 1fr)); gap:0.5rem;">';
+                    data.tracks.forEach(t => {
+                        html += `
+                            <div style="background:var(--bg-card); padding:0.5rem; border-radius:var(--radius-sm); border:1px solid var(--border-color); display:flex; justify-content:space-between;">
+                                <span><span style="color:var(--text-secondary); margin-right:0.4rem;">${t.position}</span> ${t.title}</span>
+                                <span style="color:var(--text-secondary); font-variant-numeric:tabular-nums;">${t.duration}</span>
+                            </div>
+                        `;
+                    });
+                    html += '</div>';
+                    content.innerHTML = html;
+                } else {
+                    content.innerHTML = '<p style="color:var(--text-secondary);">Nessuna traccia trovata per questo album.</p>';
+                }
+                content.dataset.loaded = 'true';
+            } catch (err) {
+                content.innerHTML = `<p style="color:var(--danger);">Errore nel caricamento delle tracce.</p>`;
+            }
+        }
+    } else {
+        row.style.display = 'none';
+    }
+}
+
+async function importAlbum(mbid, btn) {
+    const originalHtml = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = '<span class="material-symbols-outlined" style="animation: spin 1s linear infinite;">sync</span> Importo...';
+    btn.style.opacity = '0.7';
+    
+    try {
+        const response = await fetch(`/musicbrainz/import/${mbid}/?ajax=1`);
+        const data = await response.json();
+        
+        if (response.ok && data.success) {
+            btn.innerHTML = '<span class="material-symbols-outlined">check_circle</span> Importato!';
+            btn.style.background = 'var(--success)';
+            btn.style.color = 'white';
+            btn.style.opacity = '1';
+            setTimeout(() => { window.location.href = data.redirect_url; }, 800);
+        } else {
+            btn.innerHTML = '<span class="material-symbols-outlined">error</span> Errore';
+            btn.style.background = 'var(--danger)';
+            btn.style.color = 'white';
+            btn.style.opacity = '1';
+            setTimeout(() => {
+                btn.innerHTML = originalHtml;
+                btn.style.background = '';
+                btn.style.color = '';
+                btn.disabled = false;
+            }, 2000);
+        }
+    } catch (err) {
+        btn.innerHTML = '<span class="material-symbols-outlined">wifi_off</span> Rete';
+        btn.style.opacity = '1';
+        setTimeout(() => {
+            btn.innerHTML = originalHtml;
+            btn.style.background = '';
+            btn.style.color = '';
+            btn.disabled = false;
+        }, 2000);
+    }
+}
+</script>
+{% endblock %}
