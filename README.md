@@ -1,4 +1,4 @@
-# Music Library 🎵
+# Music Library
 
 ## About This Project
 
@@ -12,7 +12,6 @@ Key features include:
 - **CSV Data Import:** Quickly bulk-upload your existing music collection through a CSV upload tool.
 - **User Ratings & Authentication:** Create an account to securely save your library and rate your favorite albums and artists.
 
-This project demonstrates practical full-stack web development skills, including database modeling, API consumption, session management, and responsive front-end design.
 
 ---
 
@@ -35,8 +34,8 @@ The project relies on the following main Python libraries (automatically managed
 1. **Clone the repository**
    Open your terminal and clone the project to your local machine:
    ```bash
-   git clone <your-github-repo-url>
-   cd music_library
+   git clone https://github.com/itsmrma/uni-musiclib-project
+   cd uni-musiclib-project
    ```
 
 2. **Install dependencies with `uv`**
