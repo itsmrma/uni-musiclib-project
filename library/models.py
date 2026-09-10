@@ -247,27 +247,3 @@ class VotoCanzone(models.Model):
     def __str__(self):
         return f"{self.utente.username} → {self.canzone.titolo}: {self.punteggio}★"
 
-
-class PostSocial(models.Model):
-    """Post social (commento + like) legato a un album."""
-    utente = models.ForeignKey(
-        User,
-        on_delete=models.CASCADE,
-        related_name='post_social',
-    )
-    album = models.ForeignKey(
-        Album,
-        on_delete=models.CASCADE,
-        related_name='post_social',
-    )
-    commento = models.TextField()
-    like = models.IntegerField(default=0)
-    data_creazione = models.DateTimeField(auto_now_add=True)
-
-    class Meta:
-        ordering = ['-data_creazione']
-        verbose_name = 'Post Social'
-        verbose_name_plural = 'Post Social'
-
-    def __str__(self):
-        return f"{self.utente.username} su {self.album.titolo}"

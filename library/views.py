@@ -32,6 +32,7 @@ from .forms import (
     CSVUploadForm, 
     CanzoneFormSet,
     MetadatoCanzoneFormSet,
+    MetadatoArtistaFormSet,
     CanzoneForm,
     UserProfileForm,
     UserRegistrationForm
@@ -186,7 +187,6 @@ class AlbumDetailView(LoginRequiredMixin, DetailView):
         )
         user_voto = self.object.voti.filter(utente=self.request.user).first()
         ctx['user_voto'] = user_voto.punteggio if user_voto else 0
-        ctx['post_social'] = self.object.post_social.all()
         ctx['dominant_color'] = get_dominant_color(self.object.copertina)
         return ctx
 
@@ -359,9 +359,26 @@ class ArtistaUpdateView(LoginRequiredMixin, UpdateView):
     success_url = reverse_lazy('library:artista_list')
 
     def get_context_data(self, **kwargs):
-        ctx = super().get_context_data(**kwargs)
-        ctx['page_title'] = 'Modifica Artista'
-        return ctx
+        data = super().get_context_data(**kwargs)
+        data['page_title'] = 'Modifica Artista'
+        if self.request.POST:
+            data['metadati'] = MetadatoArtistaFormSet(self.request.POST, instance=self.object)
+        else:
+            data['metadati'] = MetadatoArtistaFormSet(instance=self.object)
+        return data
+
+    def form_valid(self, form):
+        context = self.get_context_data()
+        metadati = context['metadati']
+        with transaction.atomic():
+            self.object = form.save()
+            if metadati.is_valid():
+                metadati.instance = self.object
+                metadati.save()
+        return super().form_valid(form)
+
+    def get_success_url(self):
+        return reverse('library:artista_detail', kwargs={'pk': self.object.pk})
 
 
 class ArtistaDeleteView(LoginRequiredMixin, DeleteView):

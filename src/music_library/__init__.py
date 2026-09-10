@@ -1,2 +1,1 @@
-def main() -> None:
-    print("Hello from music-library!")
+# Empty init to satisfy uv build

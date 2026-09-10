@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Artista, Album, Canzone, VotoAlbum, VotoArtista, VotoCanzone, PostSocial
+from .models import Artista, Album, Canzone, VotoAlbum, VotoArtista, VotoCanzone
 
 class CanzoneInline(admin.TabularInline):
     model = Canzone
@@ -42,9 +42,3 @@ class VotoCanzoneAdmin(admin.ModelAdmin):
     list_display = ('utente', 'canzone', 'punteggio')
     list_filter = ('punteggio',)
 
-
-@admin.register(PostSocial)
-class PostSocialAdmin(admin.ModelAdmin):
-    list_display = ('utente', 'album', 'data_creazione', 'like')
-    list_filter = ('data_creazione',)
-    search_fields = ('commento',)

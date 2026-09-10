@@ -15,6 +15,19 @@ Key features include:
 
 ---
 
+## Struttura del Database
+
+Il progetto è basato su diverse tabelle (modelli) principali:
+
+- **User & UserProfile**: Gestiscono l'autenticazione degli utenti e memorizzano il loro avatar (con fallback a Gravatar).
+- **Artista**: Raccoglie i dati degli artisti salvati dall'utente (nome, biografia, foto profilo).
+- **Album**: Salva i dettagli delle release (titolo, anno di uscita, formato fisico/digitale) collegandoli al proprio `Artista`.
+- **Canzone**: Rappresenta le singole tracce musicali (con durata e numero traccia) appartenenti a un `Album`.
+- **MetadatoArtista / MetadatoCanzone**: Tabelle chiave-valore per permettere l'aggiunta di infinite proprietà flessibili (es. "Ruolo: Cantante", "Strumento: Chitarra").
+- **VotoAlbum / VotoArtista / VotoCanzone**: Gestiscono le recensioni e i rating (da 0.5 a 5 stelle) assegnati dall'utente.
+
+---
+
 ## Installation & Setup
 
 This project uses [uv](https://github.com/astral-sh/uv), an extremely fast Python package and project manager. 

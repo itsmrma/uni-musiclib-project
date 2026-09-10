@@ -205,6 +205,18 @@ MetadatoCanzoneFormSet = forms.inlineformset_factory(
     }
 )
 
+from .models import MetadatoArtista
+
+MetadatoArtistaFormSet = forms.inlineformset_factory(
+    Artista, MetadatoArtista, 
+    fields=['chiave', 'valore'], 
+    extra=1, 
+    can_delete=True,
+    widgets={
+        'chiave': forms.TextInput(attrs={'class': 'form-input', 'placeholder': 'es. Ruolo'}),
+        'valore': forms.TextInput(attrs={'class': 'form-input', 'placeholder': 'es. Cantante'}),
+    }
+)
 
 class MusicBrainzSearchForm(forms.Form):
     """Form per cercare un album su MusicBrainz."""

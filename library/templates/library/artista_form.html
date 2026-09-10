@@ -35,7 +35,7 @@
     <h1>{{ page_title|default:"Artista" }}</h1>
 </div>
 
-<div class="card-static" style="max-width:640px;">
+<div class="card-static">
     <form method="post" enctype="multipart/form-data">
         {% csrf_token %}
 
@@ -119,6 +119,48 @@
             {% endif %}
         {% endfor %}
 
+        {% if metadati %}
+        <div style="margin-top: 2rem; border-top: 1px solid var(--border-color); padding-top: 1.5rem;">
+            <h2 style="font-size:1.1rem; margin-bottom:1rem;">Dettagli personalizzati (Strumenti, Ruoli, Componenti...)</h2>
+            <p style="font-size:0.85rem; color:var(--text-secondary); margin-bottom:1.5rem;">Aggiungi metadati come "Strumento: Chitarra" o "Ruolo: Cantante".</p>
+            
+            {{ metadati.management_form }}
+            
+            <div id="metadati-formset">
+                {% for mform in metadati %}
+                <div class="form-group metadato-row" style="display:flex; gap:1rem; align-items:flex-end; padding-bottom:1rem; border-bottom:1px solid var(--border-color); margin-bottom:1rem;">
+                    {% for hidden in mform.hidden_fields %}
+                        {{ hidden }}
+                    {% endfor %}
+                    <div style="flex:1;">
+                        <label style="font-size:0.8rem;">Categoria / Etichetta</label>
+                        {{ mform.chiave }}
+                        {% if mform.chiave.errors %}<div style="color:var(--danger); font-size:0.8rem;">{{ mform.chiave.errors }}</div>{% endif %}
+                    </div>
+                    <div style="flex:2;">
+                        <label style="font-size:0.8rem;">Valore</label>
+                        {{ mform.valore }}
+                        {% if mform.valore.errors %}<div style="color:var(--danger); font-size:0.8rem;">{{ mform.valore.errors }}</div>{% endif %}
+                    </div>
+                    {% if metadati.can_delete %}
+                    <div style="padding-bottom:0.5rem;">
+                        <label style="display:flex; align-items:center; gap:0.3rem; color:var(--danger); font-size:0.85rem; cursor:pointer;">
+                            {{ mform.DELETE }} Elimina
+                        </label>
+                    </div>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            </div>
+
+            <div style="margin-bottom:2rem;">
+                <button type="button" id="add-metadato" class="btn" style="background:var(--bg-secondary); border:1px dashed var(--border-color); width:100%; display:flex; align-items:center; justify-content:center; gap:0.5rem; padding:1rem; color:var(--text-secondary);">
+                    <span class="material-symbols-outlined">add_circle</span> Aggiungi Categoria Personalizzata
+                </button>
+            </div>
+        </div>
+        {% endif %}
+
         <div style="display:flex; gap:0.75rem; margin-top:1.5rem;">
             <button type="submit" class="btn btn-primary">
                 <span class="material-symbols-outlined">save</span> Salva
@@ -127,11 +169,53 @@
         </div>
     </form>
 </div>
+
+{% if metadati %}
+<!-- Template vuoto per la riga aggiuntiva -->
+<div id="empty-form" style="display:none;">
+    <div class="form-group metadato-row" style="display:flex; gap:1rem; align-items:flex-end; padding-bottom:1rem; border-bottom:1px solid var(--border-color); margin-bottom:1rem;">
+        {% for hidden in metadati.empty_form.hidden_fields %}
+            {{ hidden }}
+        {% endfor %}
+        <div style="flex:1;">
+            <label style="font-size:0.8rem;">Categoria / Etichetta</label>
+            {{ metadati.empty_form.chiave }}
+        </div>
+        <div style="flex:2;">
+            <label style="font-size:0.8rem;">Valore</label>
+            {{ metadati.empty_form.valore }}
+        </div>
+        {% if metadati.can_delete %}
+        <div style="padding-bottom:0.5rem;">
+            <label style="display:flex; align-items:center; gap:0.3rem; color:var(--danger); font-size:0.85rem; cursor:pointer;">
+                {{ metadati.empty_form.DELETE }} Elimina
+            </label>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endif %}
+
 {% endblock %}
 
 {% block extra_js %}
 <script>
     document.addEventListener('DOMContentLoaded', function() {
+        // JS per formset metadati
+        const addBtn = document.getElementById('add-metadato');
+        const formsetContainer = document.getElementById('metadati-formset');
+        
+        if (addBtn && formsetContainer) {
+            const emptyForm = document.getElementById('empty-form').innerHTML;
+            const totalForms = document.getElementById('id_metadati-TOTAL_FORMS');
+            
+            addBtn.addEventListener('click', function() {
+                const currentFormCount = parseInt(totalForms.value);
+                const newFormHtml = emptyForm.replace(/__prefix__/g, currentFormCount);
+                formsetContainer.insertAdjacentHTML('beforeend', newFormHtml);
+                totalForms.value = currentFormCount + 1;
+            });
+        }
         const urlInput = document.getElementById('{{ form.immagine_url.id_for_label }}');
         
         if (urlInput && urlInput.value) {

@@ -163,26 +163,5 @@
 </div>
 {% endif %}
 
-<!-- Post Social -->
-{% if post_social %}
-<div style="margin-top:2rem;">
-    <h2 style="font-size:1.3rem; font-weight:700; margin-bottom:1rem; display:flex; align-items:center; gap:0.5rem;">
-        <span class="material-symbols-outlined">forum</span> Post Social
-    </h2>
-    <div style="display:flex; flex-direction:column; gap:1rem;">
-        {% for post in post_social %}
-        <div class="card-static">
-            <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:0.5rem;">
-                <span style="font-weight:600;">{{ post.utente.username }}</span>
-                <span style="font-size:0.8rem; color:var(--text-secondary);">{{ post.data_creazione|date:"d/m/Y H:i" }}</span>
-            </div>
-            <p style="color:var(--text-secondary);">{{ post.commento }}</p>
-            <p style="margin-top:0.5rem; font-size:0.85rem; color:var(--accent-secondary); display:flex; align-items:center; gap:0.3rem;">
-                <span class="material-symbols-outlined icon-sm icon-filled">favorite</span> {{ post.like }} like
-            </p>
-        </div>
-        {% endfor %}
-    </div>
-</div>
-{% endif %}
+
 {% endblock %}
