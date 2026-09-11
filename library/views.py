@@ -778,15 +778,62 @@ def csv_upload(request):
                             formato_fisico=formato,
                         )
                         
+                        voto_album_str = row.get('voto_album', '').strip()
+                        if voto_album_str:
+                            try:
+                                from decimal import Decimal
+                                punteggio = Decimal(voto_album_str.replace(',', '.'))
+                                if 0.5 <= punteggio <= 5.0:
+                                    VotoAlbum.objects.create(
+                                        utente=request.user,
+                                        album=album,
+                                        punteggio=punteggio
+                                    )
+                            except Exception:
+                                pass
+                        
                         canzoni_str = row.get('canzoni', '').strip()
                         if canzoni_str:
                             canzoni_list = [c.strip() for c in canzoni_str.split('|') if c.strip()]
+                            durate_str = row.get('durata_canzoni', '').strip()
+                            voti_canzoni_str = row.get('voti_canzoni', '').strip()
+                            
+                            durate_list = [d.strip() for d in durate_str.split('|')] if durate_str else []
+                            voti_list = [v.strip() for v in voti_canzoni_str.split('|')] if voti_canzoni_str else []
+
                             for idx, c_titolo in enumerate(canzoni_list, start=1):
-                                Canzone.objects.create(
+                                durata = None
+                                if idx <= len(durate_list) and durate_list[idx-1]:
+                                    d_str = durate_list[idx-1]
+                                    try:
+                                        parts = d_str.split(':')
+                                        if len(parts) == 2:
+                                            durata = timedelta(minutes=int(parts[0]), seconds=int(parts[1]))
+                                        elif len(parts) == 3:
+                                            durata = timedelta(hours=int(parts[0]), minutes=int(parts[1]), seconds=int(parts[2]))
+                                    except Exception:
+                                        pass
+
+                                canzone = Canzone.objects.create(
                                     album=album,
                                     titolo=c_titolo,
-                                    numero_traccia=idx
+                                    numero_traccia=idx,
+                                    durata=durata
                                 )
+                                
+                                if idx <= len(voti_list) and voti_list[idx-1]:
+                                    v_str = voti_list[idx-1]
+                                    try:
+                                        from decimal import Decimal
+                                        punteggio = Decimal(v_str.replace(',', '.'))
+                                        if 0.5 <= punteggio <= 5.0:
+                                            VotoCanzone.objects.create(
+                                                utente=request.user,
+                                                canzone=canzone,
+                                                punteggio=punteggio
+                                            )
+                                    except Exception:
+                                        pass
                         count += 1
                     except Exception as e:
                         errors.append(f'Riga {i}: {e}')
@@ -808,18 +855,48 @@ def csv_export(request):
     response['Content-Disposition'] = 'attachment; filename="libreria.csv"'
     
     writer = csv.writer(response)
-    writer.writerow(['titolo', 'artista', 'anno_uscita', 'tipo_release', 'formato_fisico', 'canzoni'])
+    writer.writerow(['titolo', 'artista', 'anno_uscita', 'tipo_release', 'formato_fisico', 'canzoni', 'voto_album', 'durata_canzoni', 'voti_canzoni'])
     
     for album in Album.objects.filter(user=request.user).order_by('artista__nome', 'titolo'):
+        voto_album_obj = album.voti.filter(utente=request.user).first()
+        voto_album = str(voto_album_obj.punteggio) if voto_album_obj else ''
+
         canzoni = album.canzoni.all().order_by('numero_traccia')
         canzoni_str = '|'.join([c.titolo for c in canzoni])
+        
+        durate_list = []
+        voti_canzoni_list = []
+        
+        for c in canzoni:
+            if c.durata:
+                s = int(c.durata.total_seconds())
+                if s >= 3600:
+                    durata_str = f"{s // 3600:02d}:{(s % 3600) // 60:02d}:{s % 60:02d}"
+                else:
+                    durata_str = f"{s // 60:02d}:{s % 60:02d}"
+                durate_list.append(durata_str)
+            else:
+                durate_list.append('')
+            
+            voto_canzone_obj = c.voti.filter(utente=request.user).first()
+            if voto_canzone_obj:
+                voti_canzoni_list.append(str(voto_canzone_obj.punteggio))
+            else:
+                voti_canzoni_list.append('')
+
+        durate_str = '|'.join(durate_list) if any(durate_list) else ''
+        voti_canzoni_str = '|'.join(voti_canzoni_list) if any(voti_canzoni_list) else ''
+
         writer.writerow([
             album.titolo,
             album.artista.nome,
             album.anno_uscita,
             album.tipo_release,
             album.formato_fisico,
-            canzoni_str
+            canzoni_str,
+            voto_album,
+            durate_str,
+            voti_canzoni_str
         ])
     return response
 

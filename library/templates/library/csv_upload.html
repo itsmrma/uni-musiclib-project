@@ -21,14 +21,23 @@
 <style>
     .csv-layout {
         display: grid;
-        grid-template-columns: 1fr 1fr;
+        grid-template-columns: minmax(300px, 1fr) max-content;
         gap: 2rem;
         align-items: start;
     }
-    @media (max-width: 768px) {
+    @media (max-width: 900px) {
         .csv-layout {
             grid-template-columns: minmax(0, 1fr);
         }
+    }
+    .csv-example-code {
+        font-size: 0.8rem;
+        color: var(--accent-secondary);
+        white-space: pre;
+        display: block;
+        overflow-x: auto;
+        background: none;
+        padding-bottom: 0.5rem;
     }
 </style>
 <div class="csv-layout">
@@ -94,16 +103,19 @@
                     <tr><td data-label="Campo"><code>tipo_release</code></td><td data-label="Obbligatorio"><span class="material-symbols-outlined icon-sm" style="color:var(--text-muted);">remove</span></td><td data-label="Tipo">album / concerto</td></tr>
                     <tr><td data-label="Campo"><code>formato_fisico</code></td><td data-label="Obbligatorio"><span class="material-symbols-outlined icon-sm" style="color:var(--text-muted);">remove</span></td><td data-label="Tipo">cd / vinile / dvd / bluray</td></tr>
                     <tr><td data-label="Campo"><code>canzoni</code></td><td data-label="Obbligatorio"><span class="material-symbols-outlined icon-sm" style="color:var(--text-muted);">remove</span></td><td data-label="Tipo">Testo (separate da |)</td></tr>
+                    <tr><td data-label="Campo"><code>voto_album</code></td><td data-label="Obbligatorio"><span class="material-symbols-outlined icon-sm" style="color:var(--text-muted);">remove</span></td><td data-label="Tipo">Numero (0.5 - 5.0)</td></tr>
+                    <tr><td data-label="Campo"><code>durata_canzoni</code></td><td data-label="Obbligatorio"><span class="material-symbols-outlined icon-sm" style="color:var(--text-muted);">remove</span></td><td data-label="Tipo">Min:Sec (separate da |)</td></tr>
+                    <tr><td data-label="Campo"><code>voti_canzoni</code></td><td data-label="Obbligatorio"><span class="material-symbols-outlined icon-sm" style="color:var(--text-muted);">remove</span></td><td data-label="Tipo">Numeri (separate da |)</td></tr>
                 </tbody>
             </table>
         </div>
 
-        <div style="margin-top:1rem; padding:1rem; background:var(--bg-secondary); border-radius:var(--radius-sm); overflow-x:auto;">
+        <div style="margin-top:1rem; padding:1rem; background:var(--bg-secondary); border-radius:var(--radius-sm); overflow:hidden;">
             <p style="font-size:0.75rem; color:var(--text-secondary); margin-bottom:0.5rem; text-transform:uppercase; font-weight:600; letter-spacing:0.05em;">Esempio</p>
-            <code style="font-size:0.8rem; color:var(--accent-secondary); white-space:pre; background:none; padding:0;">titolo,artista,anno_uscita,tipo_release,formato_fisico,canzoni
-OK Computer,Radiohead,1997,album,cd,Airbag|Paranoid Android|Subterranean Homesick Alien
-Random Access Memories,Daft Punk,2013,album,vinile,Give Life Back to Music|The Game of Love
-Pulse,Pink Floyd,1995,concerto,dvd,Shine On You Crazy Diamond|Learning to Fly</code>
+            <code class="csv-example-code">titolo,artista,anno_uscita,tipo_release,formato_fisico,canzoni,voto_album,durata_canzoni,voti_canzoni
+OK Computer,Radiohead,1997,album,cd,Airbag|Paranoid Android|Subterranean Homesick Alien,5.0,04:44|06:23|04:27,5|5|4.5
+Random Access Memories,Daft Punk,2013,album,vinile,Give Life Back to Music|The Game of Love,4.5,04:34|05:22,4|4.5
+Pulse,Pink Floyd,1995,concerto,dvd,Shine On You Crazy Diamond|Learning to Fly,5.0,,</code>
         </div>
         </div>
     </div>
