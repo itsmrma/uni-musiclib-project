@@ -15,62 +15,62 @@ Key features include:
 
 ---
 
-## Struttura dei File del Progetto
+## Project File Structure
 
 ```text
-music_library/
-├── manage.py                  # Entrypoint standard di Django
-├── pyproject.toml / uv.lock   # Dipendenze e virtual environment manager (uv)
-├── db.sqlite3                 # Database SQLite locale
-├── README.md                  # Questo file
+uni-musiclib-project/
+├── manage.py                  # Standard Django entrypoint
+├── pyproject.toml / uv.lock   # Dependencies and virtual environment manager (uv)
+├── db.sqlite3                 # Local SQLite database
+├── README.md                  # This file
 │
-├── core/                      # Progetto Django in senso stretto (settaggi globali)
-│   ├── settings.py            # Configurazioni generali, database, app installate
-│   ├── urls.py                # Rotte principali e inclusione di library/
-│   ├── wsgi.py / asgi.py      # Entrypoint per server
+├── core/                      # Global Django project settings
+│   ├── settings.py            # General configuration, database, installed apps
+│   ├── urls.py                # Main routes and inclusion of library/
+│   ├── wsgi.py / asgi.py      # Server entrypoints
 │   └── __init__.py
 │
-├── library/                   # L'app Django principale del progetto
-│   ├── models.py              # I modelli del database (Artista, Album, Canzone, ecc.)
-│   ├── views.py               # Le logiche e le class-based view
-│   ├── forms.py               # ModelForm per le interazioni con i modelli
-│   ├── urls.py                # Rotte specifiche dell'app
-│   ├── admin.py               # Registrazione dei modelli per l'admin panel
-│   ├── tests.py               # Test automatici
+├── library/                   # The main Django app of the project
+│   ├── models.py              # Database models (Artist, Album, Song, etc.)
+│   ├── views.py               # Logic and class-based views
+│   ├── forms.py               # ModelForms for interactions with models
+│   ├── urls.py                # App-specific routes
+│   ├── admin.py               # Model registration for the admin panel
+│   ├── tests.py               # Automated tests
 │   │
-│   ├── static/                # File statici
-│   │   ├── css/style.css      # Foglio di stile CSS personalizzato
-│   │   └── scripts/main.js    # Script JavaScript (es. per interazioni)
+│   ├── static/                # Static files
+│   │   ├── css/style.css      # Custom CSS stylesheet
+│   │   └── scripts/main.js    # JavaScript files (e.g., for interactions)
 │   │
-│   └── templates/library/     # Template HTML dell'app
-│       ├── base.html          # Il template base da cui ereditano gli altri
-│       ├── album_*.html       # CRUD e viste per gli Album
-│       ├── artista_*.html     # CRUD e viste per gli Artisti
-│       ├── canzone_*.html     # CRUD per le Canzoni
-│       ├── search.html        # Vista per la ricerca
-│       ├── csv_upload.html    # Upload in blocco tramite CSV
-│       ├── musicbrainz_*.html # Ricerca su API esterne
-│       └── login.html / register.html # Autenticazione utente
+│   └── templates/library/     # HTML templates for the app
+│       ├── base.html          # Base template inherited by others
+│       ├── album_*.html       # CRUD and views for Albums
+│       ├── artista_*.html     # CRUD and views for Artists
+│       ├── canzone_*.html     # CRUD for Songs
+│       ├── search.html        # Search view
+│       ├── csv_upload.html    # Bulk upload via CSV
+│       ├── musicbrainz_*.html # External API search
+│       └── login.html / register.html # User authentication
 │
-└── media/                     # File caricati dagli utenti a runtime
-    ├── album/                 # Copertine degli album
-    └── artisti/               # Immagini del profilo degli artisti
+└── media/                     # Files uploaded by users at runtime
+    ├── album/                 # Album covers
+    └── artisti/               # Artist profile images
 ```
 
 ---
 
-## Struttura del Database
+## Database Structure
 
-[Visualizza lo schema Entità-Relazione interattivo su Mermaid Live](https://mermaid.live/edit#pako:eNq9VttO20AQ_ZXVSpVACpQQQojfUggV4hIECQ8okjWxJ8609q67XqeUhH_pY_-DH-s6ELDjDVhIrZ_snTmzZ8_MznjGPekjdziqI4JAQTRUQ8HM8-kTu8IQ7kkKYgONQuPSNLjuXrH5fGtrPl-8u5dXveOTsy5z2JBPgG3UnfrmkJfc5Yx1rvon1_3OwpNEgooSDz8HmOjsJUNerEOefRmcfwB30-v33Py2mMSKogqYlw2rIg47F7e9i-46TE7Zr6hAeRMCdp4m5EH4ou2SaenUcToahcZ1lcWTx7N7noEnhSYU6yicowYfNLGNS9AalWDdzs3mGhrn3X7nqLMi5OMf5mPiKdJaMr9EbMllNUSeYy4ErITI1yF5mNUhshupaQ3FUp6VQU3xTblW8mxHrJyjlOkyKkf9CMck6Il81-RDP_5myDpaKxqlr2dZlNJs-ZU9JDQjn12e5hcTAxMBS039C4jQYsIIKLSsx5AkP6XyLaYxqUS7a-KFYLGZskGdFXf24n6TJPAl8ENegEJzqHw8mIIGtdbgpipcDZUp4pp4x6cmIYPT1-QV6CyrozITIYsH13in2Yik6ZNjAguAoggCI4cbKzmmUK7naSe4KMXK9Ew5yfIeIIR008QjbWPoyRiVJmGzjaWKQEt3TKYnSeuGsXQVhghJQZeRlCHzKTBbhuiC9yOlRJtIJWpmZ2MoKlBRm-WVe1-dbFGkESrpagWeZ81UWbuR4W-QfqqgqNwi69qMGps7hKM0eoN2qXNWzm42Hqa2OzmFUCq0cbHJa2dTXc0Ps_FA3Ju29wabQst-n4mPHkUQsjg1_yJBQOXbtfhLKVdXZXly8-A_0HmncgqD5t_TsaeL13igyOeOVinWuLlUZsCYTz7LHIZcT9C0SJ7NQR_Ud9N4RYaJQdxKGS1hSqbBhDtjCBPzlcbZ3Hj-3XxxQeGjOpSGPXcO9huLGNyZ8TvuNPaa2-3GwUGrsduu79Sb-zX-izt7LbPYau609nfbjfZes_FQ4_eLTXe2D8y6eertnd12s9VuPfwFrUhQDg)
+[View the interactive Entity-Relationship diagram on Mermaid Live](https://mermaid.live/edit#pako:eNq9VttO20AQ_ZXVSpVACpQQQojfUggV4hIECQ8okjWxJ8609q67XqeUhH_pY_-DH-s6ELDjDVhIrZ_snTmzZ8_MznjGPekjdziqI4JAQTRUQ8HM8-kTu8IQ7kkKYgONQuPSNLjuXrH5fGtrPl-8u5dXveOTsy5z2JBPgG3UnfrmkJfc5Yx1rvon1_3OwpNEgooSDz8HmOjsJUNerEOefRmcfwB30-v33Py2mMSKogqYlw2rIg47F7e9i-46TE7Zr6hAeRMCdp4m5EH4ou2SaenUcToahcZ1lcWTx7N7noEnhSYU6yicowYfNLGNS9AalWDdzs3mGhrn3X7nqLMi5OMf5mPiKdJaMr9EbMllNUSeYy4ErITI1yF5mNUhshupaQ3FUp6VQU3xTblW8mxHrJyjlOkyKkf9CMck6Il81-RDP_5myDpaKxqlr2dZlNJs-ZU9JDQjn12e5hcTAxMBS039C4jQYsIIKLSsx5AkP6XyLaYxqUS7a-KFYLGZskGdFXf24n6TJPAl8ENegEJzqHw8mIIGtdbgpipcDZUp4pp4x6cmIYPT1-QV6CyrozITIYsH13in2Yik6ZNjAguAoggCI4cbKzmmUK7naSe4KMXK9Ew5yfIeIIR008QjbWPoyRiVJmGzjaWKQEt3TKYnSeuGsXQVhghJQZeRlCHzKTBbhuiC9yOlRJtIJWpmZ2MoKlBRm-WVe1-dbFGkESrpagWeZ81UWbuR4W-QfqqgqNwi69qMGps7hKM0eoN2qXNWzm42Hqa2OzmFUCq0cbHJa2dTXc0Ps_FA3Ju29wabQst-n4mPHkUQsjg1_yJBQOXbtfhLKVdXZXly8-A_0HmncgqD5t_TsaeL13igyOeOVinWuLlUZsCYTz7LHIZcT9C0SJ7NQR_Ud9N4RYaJQdxKGS1hSqbBhDtjCBPzlcbZ3Hj-3XxxQeGjOpSGPXcO9huLGNyZ8TvuNPaa2-3GwUGrsduu79Sb-zX-izt7LbPYau609nfbjfZes_FQ4_eLTXe2D8y6eertnd12s9VuPfwFrUhQDg)
 
-Il progetto è basato su diverse tabelle (modelli) principali:
+The project is based on several main tables (models):
 
-- **User & UserProfile**: Gestiscono l'autenticazione degli utenti e memorizzano il loro avatar (con fallback a Gravatar).
-- **Artista**: Raccoglie i dati degli artisti salvati dall'utente (nome, biografia, foto profilo).
-- **Album**: Salva i dettagli delle release (titolo, anno di uscita, formato fisico/digitale) collegandoli al proprio `Artista`.
-- **Canzone**: Rappresenta le singole tracce musicali (con durata e numero traccia) appartenenti a un `Album`.
-- **MetadatoArtista / MetadatoCanzone**: Tabelle chiave-valore per permettere l'aggiunta di infinite proprietà flessibili (es. "Ruolo: Cantante", "Strumento: Chitarra").
-- **VotoAlbum / VotoArtista / VotoCanzone**: Gestiscono le recensioni e i rating (da 0.5 a 5 stelle) assegnati dall'utente.
+- **User & UserProfile**: Handle user authentication and store their avatar (with a fallback to Gravatar).
+- **Artista (Artist)**: Collects data for artists saved by the user (name, biography, profile picture).
+- **Album**: Saves the release details (title, release year, physical/digital format) linking them to their `Artista`.
+- **Canzone (Song)**: Represents the individual music tracks (with duration and track number) belonging to an `Album`.
+- **MetadatoArtista / MetadatoCanzone**: Key-value tables to allow the addition of infinite flexible properties (e.g., "Role: Singer", "Instrument: Guitar").
+- **VotoAlbum / VotoArtista / VotoCanzone**: Handle reviews and ratings (from 0.5 to 5 stars) assigned by the user.
 
 ---
 
