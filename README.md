@@ -43,14 +43,29 @@ uni-musiclib-project/
 │   │   └── scripts/main.js    # JavaScript files (e.g., for interactions)
 │   │
 │   └── templates/library/     # HTML templates for the app
-│       ├── base.html          # Base template inherited by others
-│       ├── album_*.html       # CRUD and views for Albums
-│       ├── artista_*.html     # CRUD and views for Artists
-│       ├── canzone_*.html     # CRUD for Songs
-│       ├── search.html        # Search view
-│       ├── csv_upload.html    # Bulk upload via CSV
-│       ├── musicbrainz_*.html # External API search
-│       └── login.html / register.html # User authentication
+│       ├── base.html                       # Base template inherited by others
+│       ├── _album_card.html                # Reusable partial: album card component
+│       ├── _star_rating.html               # Reusable partial: star rating widget
+│       ├── album_list.html                 # Album list view
+│       ├── album_detail.html               # Album detail page
+│       ├── album_form.html                 # Create / edit album form
+│       ├── album_confirm_delete.html       # Album delete confirmation
+│       ├── artista_list.html               # Artist list view
+│       ├── artista_detail.html             # Artist detail page
+│       ├── artista_form.html               # Create / edit artist form
+│       ├── artista_confirm_delete.html     # Artist delete confirmation
+│       ├── artista_metadata.html           # Artist key-value metadata editor
+│       ├── canzone_detail.html             # Song detail page
+│       ├── canzone_form.html               # Create / edit song form
+│       ├── search.html                     # Main search view
+│       ├── musicbrainz_search.html         # MusicBrainz external API search
+│       ├── theaudiodb_search.html          # TheAudioDB external API search
+│       ├── csv_upload.html                 # Bulk upload via CSV
+│       ├── profile.html                    # User profile page
+│       ├── login.html                      # Login page
+│       ├── register.html                   # Registration page
+│       ├── admin_users.html                # Admin: user management
+│       └── admin_password_change.html      # Admin: password change
 │
 └── media/                     # Files uploaded by users at runtime
     ├── album/                 # Album covers
