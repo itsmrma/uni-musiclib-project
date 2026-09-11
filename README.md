@@ -15,7 +15,53 @@ Key features include:
 
 ---
 
+## Struttura dei File del Progetto
+
+```text
+music_library/
+├── manage.py                  # Entrypoint standard di Django
+├── pyproject.toml / uv.lock   # Dipendenze e virtual environment manager (uv)
+├── db.sqlite3                 # Database SQLite locale
+├── README.md                  # Questo file
+│
+├── core/                      # Progetto Django in senso stretto (settaggi globali)
+│   ├── settings.py            # Configurazioni generali, database, app installate
+│   ├── urls.py                # Rotte principali e inclusione di library/
+│   ├── wsgi.py / asgi.py      # Entrypoint per server
+│   └── __init__.py
+│
+├── library/                   # L'app Django principale del progetto
+│   ├── models.py              # I modelli del database (Artista, Album, Canzone, ecc.)
+│   ├── views.py               # Le logiche e le class-based view
+│   ├── forms.py               # ModelForm per le interazioni con i modelli
+│   ├── urls.py                # Rotte specifiche dell'app
+│   ├── admin.py               # Registrazione dei modelli per l'admin panel
+│   ├── tests.py               # Test automatici
+│   │
+│   ├── static/                # File statici
+│   │   ├── css/style.css      # Foglio di stile CSS personalizzato
+│   │   └── scripts/main.js    # Script JavaScript (es. per interazioni)
+│   │
+│   └── templates/library/     # Template HTML dell'app
+│       ├── base.html          # Il template base da cui ereditano gli altri
+│       ├── album_*.html       # CRUD e viste per gli Album
+│       ├── artista_*.html     # CRUD e viste per gli Artisti
+│       ├── canzone_*.html     # CRUD per le Canzoni
+│       ├── search.html        # Vista per la ricerca
+│       ├── csv_upload.html    # Upload in blocco tramite CSV
+│       ├── musicbrainz_*.html # Ricerca su API esterne
+│       └── login.html / register.html # Autenticazione utente
+│
+└── media/                     # File caricati dagli utenti a runtime
+    ├── album/                 # Copertine degli album
+    └── artisti/               # Immagini del profilo degli artisti
+```
+
+---
+
 ## Struttura del Database
+
+[Visualizza lo schema Entità-Relazione interattivo su Mermaid Live](https://mermaid.live/edit#pako:eNq9VttO20AQ_ZXVSpVACpQQQojfUggV4hIECQ8okjWxJ8609q67XqeUhH_pY_-DH-s6ELDjDVhIrZ_snTmzZ8_MznjGPekjdziqI4JAQTRUQ8HM8-kTu8IQ7kkKYgONQuPSNLjuXrH5fGtrPl-8u5dXveOTsy5z2JBPgG3UnfrmkJfc5Yx1rvon1_3OwpNEgooSDz8HmOjsJUNerEOefRmcfwB30-v33Py2mMSKogqYlw2rIg47F7e9i-46TE7Zr6hAeRMCdp4m5EH4ou2SaenUcToahcZ1lcWTx7N7noEnhSYU6yicowYfNLGNS9AalWDdzs3mGhrn3X7nqLMi5OMf5mPiKdJaMr9EbMllNUSeYy4ErITI1yF5mNUhshupaQ3FUp6VQU3xTblW8mxHrJyjlOkyKkf9CMck6Il81-RDP_5myDpaKxqlr2dZlNJs-ZU9JDQjn12e5hcTAxMBS039C4jQYsIIKLSsx5AkP6XyLaYxqUS7a-KFYLGZskGdFXf24n6TJPAl8ENegEJzqHw8mIIGtdbgpipcDZUp4pp4x6cmIYPT1-QV6CyrozITIYsH13in2Yik6ZNjAguAoggCI4cbKzmmUK7naSe4KMXK9Ew5yfIeIIR008QjbWPoyRiVJmGzjaWKQEt3TKYnSeuGsXQVhghJQZeRlCHzKTBbhuiC9yOlRJtIJWpmZ2MoKlBRm-WVe1-dbFGkESrpagWeZ81UWbuR4W-QfqqgqNwi69qMGps7hKM0eoN2qXNWzm42Hqa2OzmFUCq0cbHJa2dTXc0Ps_FA3Ju29wabQst-n4mPHkUQsjg1_yJBQOXbtfhLKVdXZXly8-A_0HmncgqD5t_TsaeL13igyOeOVinWuLlUZsCYTz7LHIZcT9C0SJ7NQR_Ud9N4RYaJQdxKGS1hSqbBhDtjCBPzlcbZ3Hj-3XxxQeGjOpSGPXcO9huLGNyZ8TvuNPaa2-3GwUGrsduu79Sb-zX-izt7LbPYau609nfbjfZes_FQ4_eLTXe2D8y6eertnd12s9VuPfwFrUhQDg)
 
 Il progetto è basato su diverse tabelle (modelli) principali:
 
